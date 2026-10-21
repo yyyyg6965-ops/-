@@ -3,472 +3,1271 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Генератор Рапортов ВС РФ v9.0 (Штаб)</title>
-<!-- Подключаем библиотеки -->
+<title>МСВС 3.0 - Штабное ПО v29.0 (Атмосфера)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/index.umd.js"></script>
 
 <style>
-    :root {
-        --bg-color: #2b2f24;
-        --panel-bg: #1e2119;
-        --text-main: #d4d6cc;
-        --text-muted: #8a8e80;
-        --border-color: #3b4033;
-        --accent: #6b8e23;
-        --accent-hover: #556b2f;
-        --danger: #a93226;
-        --input-bg: #151713;
-        --success: #27ae60;
-    }
-    body.light-theme {
-        --bg-color: #e5e6e1;
-        --panel-bg: #f4f5f0;
-        --text-main: #2e332a;
-        --text-muted: #5c614f;
-        --border-color: #b5b8ab;
-        --accent: #4b5320;
-        --accent-hover: #3a4019;
-        --input-bg: #ffffff;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    body { font-family: 'Tahoma', 'Arial', sans-serif; font-size: 12px; height: 100vh; overflow: hidden; color: #000; background: #000; }
+    body::after { content: " "; display: block; position: fixed; inset: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%), linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06)); z-index: 99999; background-size: 100% 2px, 3px 100%; pointer-events: none; }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body { 
-        font-family: 'Arial Narrow', 'Roboto Condensed', sans-serif; 
-        background-color: var(--bg-color); 
-        background-image: 
-            linear-gradient(var(--border-color) 1px, transparent 1px),
-            linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-        background-size: 50px 50px;
-        background-position: center;
-        padding: 20px; 
-        min-height: 100vh; 
-        color: var(--text-main); 
-        transition: background 0.3s;
-    }
+    /* ================= ЗАГРУЗКА ================= */
+    #boot-screen { position: fixed; inset: 0; background: #000; color: #ccc; z-index: 99999; padding: 20px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4; overflow: hidden; display: flex; flex-direction: column; }
+    #boot-log { flex: 1; overflow-y: auto; white-space: pre-wrap; }
+    .boot-ok { color: #00ff00; }
+    .boot-header { color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
 
-    .main-container { max-width: 1500px; margin: 0 auto; display: grid; grid-template-columns: 480px 1fr; gap: 20px; }
-    
-    .form-section { 
-        background: var(--panel-bg); 
-        border: 1px solid var(--border-color);
-        border-radius: 4px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-        max-height: 92vh; 
-        overflow-y: auto; 
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .panel-header {
-        background: var(--accent);
-        color: #fff;
-        padding: 15px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border-top-left-radius: 3px;
-        border-top-right-radius: 3px;
-    }
-    .theme-toggle { background: rgba(0,0,0,0.2); border: none; color: #fff; font-size: 18px; padding: 5px 10px; cursor: pointer; border-radius: 3px; transition: 0.2s; }
-    .theme-toggle:hover { background: rgba(0,0,0,0.4); }
+    /* ================= ЛОГИН ================= */
+    #login-screen { position: fixed; inset: 0; background: #3a6ea5; z-index: 99998; display: flex; justify-content: center; align-items: center; background-image: linear-gradient(to bottom, #1a3b5c 0%, #3a6ea5 100%); }
+    .login-box { background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; box-shadow: 5px 5px 15px rgba(0,0,0,0.7); padding: 20px; width: 400px; }
+    .login-header { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 5px; font-weight: bold; text-align: center; margin: -20px -20px 20px -20px; }
+    .login-user { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+    .login-avatar { width: 64px; height: 64px; background: #a0a0a0; border: 2px solid #808080; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+    .login-avatar span { font-size: 32px; }
+    .login-input { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+    .login-input label { font-size: 11px; font-weight: bold; }
+    .login-input input, .login-input select { padding: 4px; border: 2px solid; border-color: #808080 #fff #fff #808080; font-family: Tahoma; }
+    .login-btn { margin-top: 10px; width: 100%; padding: 8px; font-weight: bold; cursor: pointer; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; }
+    .login-btn:active { border-color: #808080 #fff #fff #808080; }
+    .login-link { text-align:center; margin-top:8px; font-size:11px; color:#000080; cursor:pointer; text-decoration:underline; }
 
-    .tabs { display: flex; background: var(--input-bg); border-bottom: 1px solid var(--border-color); }
-    .tab-btn { flex: 1; padding: 12px 5px; background: transparent; color: var(--text-muted); border: none; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.2s; border-right: 1px solid var(--border-color); }
-    .tab-btn:last-child { border-right: none; }
-    .tab-btn.active { background: var(--panel-bg); color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }
-    .tab-btn:hover:not(.active) { background: var(--border-color); color: var(--text-main); }
+    /* ================= РАБОЧИЙ СТОЛ ================= */
+    #desktop { position: absolute; inset: 0; background-color: #3a6ea5; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /><text x="95%" y="90%" font-family="Arial" font-size="60" fill="rgba(255,255,255,0.05)" text-anchor="end" font-weight="bold">ШТАБ МСВС</text></svg>'), linear-gradient(to bottom, #2a537a 0%, #3a6ea5 100%); background-size: cover; overflow: hidden; display: none; }
+    .desktop-icons { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 15px; height: 90vh; }
+    .desktop-icon { width: 75px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 5px; border: 1px solid transparent; }
+    .desktop-icon:hover { background: rgba(0,0,128,0.3); border: 1px dotted #fff; }
+    .desktop-icon .icon-img { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size:24px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5)); }
+    .desktop-icon .icon-text { color: #fff; font-size: 11px; text-align: center; line-height: 1.2; text-shadow: 1px 1px 2px #000; word-break: break-word; }
 
-    .tab-content { display: none; padding: 20px; animation: fadeIn 0.2s; }
-    .tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* ================= ПАНЕЛЬ ЗАДАЧ ================= */
+    #taskbar { position: absolute; bottom: 0; left: 0; right: 0; height: 36px; background: #d4d0c8; border-top: 2px solid #fff; display: none; align-items: center; padding: 0 5px; gap: 4px; z-index: 10000; }
+    .start-btn { display: flex; align-items: center; gap: 5px; padding: 2px 10px; font-weight: bold; font-size: 13px; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; cursor: pointer; height: 28px; }
+    .start-btn:active { border-color: #808080 #fff #fff #808080; }
+    .taskbar-sep { width: 2px; height: 22px; border-left: 1px solid #808080; border-right: 1px solid #fff; margin: 0 4px; }
+    .task-btn { display: flex; align-items: center; gap: 5px; padding: 4px 10px; font-size: 11px; background: #d4d0c8; border: 2px solid; border-color: #808080 #fff #fff #808080; cursor: pointer; max-width: 160px; overflow: hidden; white-space: nowrap; }
+    .task-btn.active { border-color: #808080 #fff #fff #808080; background: #e8e8e0; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2); font-weight: bold; }
+    .tray { margin-left: auto; background: #d4d0c8; border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 2px 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; height: 28px; }
+    .tray-btn { cursor: pointer; padding: 2px 5px; border: 1px solid transparent; display: flex; align-items: center; gap: 5px; }
+    .tray-btn:hover { border-color: #808080; background: #eee; }
 
-    .form-group { margin-bottom: 15px; position: relative; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 12px; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; }
-    input[type="text"], input[type="date"], select, textarea { 
-        width: 100%; padding: 10px; 
-        border: 1px solid var(--border-color); 
-        border-radius: 3px; 
-        font-family: inherit; font-size: 13px; 
-        background: var(--input-bg); color: var(--text-main); 
-    }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(107, 142, 35, 0.3); }
-    textarea { resize: vertical; min-height: 120px; }
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    
-    .char-counter { position: absolute; right: 5px; bottom: -16px; font-size: 10px; color: var(--text-muted); }
+    /* ================= МЕНЮ ПУСК ================= */
+    #startMenu { position: absolute; bottom: 36px; left: 0; width: 220px; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; display: none; flex-direction: row; z-index: 10001; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+    #startMenu.show { display: flex; }
+    .start-sidebar { width: 30px; background: linear-gradient(to top, #0055ea, #3a93ff); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
+    .start-sidebar span { color: #fff; font-weight: bold; font-size: 16px; writing-mode: vertical-rl; transform: rotate(180deg); text-shadow: 1px 1px 2px #000; }
+    .start-items { flex: 1; padding: 3px; }
+    .start-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer; position: relative; }
+    .start-item:hover { background: #000080; color: #fff; }
+    .start-divider { height: 1px; background: #808080; margin: 3px 5px; border-bottom: 1px solid #fff; }
+    .start-submenu { position: absolute; left: 215px; top: 0; width: 180px; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; display: none; padding: 2px; z-index: 10002; }
+    .start-item:hover .start-submenu { display: block; }
 
-    button { font-family: inherit; padding: 10px; font-size: 12px; font-weight: bold; border: none; border-radius: 3px; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
-    .btn-main { background: var(--accent); color: #fff; width: 100%; padding: 14px; margin-top: 15px; font-size: 14px; }
-    .btn-main:hover { background: var(--accent-hover); }
-    .btn-export { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); }
-    .btn-export:hover { background: var(--border-color); }
-    .btn-danger { background: rgba(169, 50, 38, 0.2); color: #ff6b6b; border: 1px solid var(--danger); }
-    .btn-danger:hover { background: var(--danger); color: #fff; }
-    .btn-demo { background: #f39c12; color: #fff; margin-bottom: 15px; }
-    
-    .button-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
-    .button-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-    .note { background: var(--input-bg); padding: 12px; border-left: 4px solid var(--accent); font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
+    /* ================= ОКНА ================= */
+    .window { position: absolute; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); display: flex; flex-direction: column; z-index: 100; }
+    .window.maximized { top: 0 !important; left: 0 !important; width: 100% !important; height: calc(100% - 36px) !important; z-index: 999; }
+    .window.minimized { display: none; }
+    .title-bar { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 3px 5px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; cursor: move; }
+    .title-bar .controls { display: flex; gap: 2px; }
+    .title-bar .controls button { width: 18px; height: 16px; font-size: 10px; font-weight: bold; background: #d4d0c8; border: 1px solid; border-color: #fff #808080 #808080 #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #000; }
+    .title-bar .controls button:active { border-color: #808080 #fff #fff #808080; }
+    .menu-bar { background: #d4d0c8; border-bottom: 1px solid #808080; padding: 2px 5px; display: flex; gap: 15px; font-size: 11px; }
+    .menu-bar span { cursor: pointer; padding: 2px 5px; }
+    .menu-bar span:hover { background: #000080; color: #fff; }
+    .window-content { flex: 1; overflow: hidden; padding: 2px; display: flex; flex-direction: column; }
 
-    /* Загрузка файлов */
-    .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
-    .file-upload-btn {
-        display: flex; align-items: center; justify-content: center;
-        background: var(--input-bg); border: 2px dashed var(--border-color);
-        padding: 20px; border-radius: 4px; font-weight: bold; color: var(--text-muted); transition: 0.2s;
-    }
-    .file-upload-wrapper:hover .file-upload-btn { border-color: var(--accent); color: var(--accent); }
-    .file-upload-wrapper input[type="file"] {
-        position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
-    }
+    .work-area { display: flex; flex: 1; gap: 4px; padding: 4px; overflow: hidden; }
+    .left-panel { width: 45%; display: flex; flex-direction: column; border: 2px solid; border-color: #808080 #fff #fff #808080; background: #d4d0c8; padding: 4px; }
+    .right-panel { flex: 1; display: flex; flex-direction: column; border: 2px solid; border-color: #808080 #fff #fff #808080; background: #808080; padding: 0; }
+    .tabs-container { display: flex; border-bottom: 1px solid #808080; padding-left: 3px; background: #d4d0c8; margin-bottom: 4px; }
+    .tab { padding: 4px 10px; background: #d4d0c8; border: 1px solid #fff; border-bottom: none; border-right-color: #808080; cursor: pointer; border-radius: 4px 4px 0 0; font-size: 11px; margin-right: 2px; position: relative; top: 1px; }
+    .tab.active { background: #d4d0c8; border-bottom: 1px solid #d4d0c8; z-index: 10; font-weight: bold; }
+    .scroll-content { flex: 1; overflow-y: auto; padding: 5px; }
+    .scroll-content::-webkit-scrollbar { width: 16px; }
+    .scroll-content::-webkit-scrollbar-track { background: #e0e0e0; border-left: 1px solid #808080; }
+    .scroll-content::-webkit-scrollbar-thumb { background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; }
+    fieldset { border: 1px solid #fff; border-right-color: #808080; border-bottom-color: #808080; padding: 6px; margin-bottom: 8px; }
+    legend { padding: 0 4px; font-weight: bold; font-size: 11px; }
+    .form-row { display: flex; gap: 4px; margin-bottom: 4px; }
+    .form-col { flex: 1; display: flex; flex-direction: column; }
+    label { font-size: 11px; margin-bottom: 1px; }
+    input[type="text"], input[type="date"], input[type="password"], select, textarea { width: 100%; padding: 2px 4px; font-family: 'Tahoma', sans-serif; font-size: 11px; border: 2px solid; border-color: #808080 #fff #fff #808080; background: #fff; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: #000080; }
+    textarea { resize: none; height: 60px; }
+    button.btn { font-family: 'Tahoma', sans-serif; font-size: 11px; padding: 3px 8px; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    button.btn:active { border-color: #808080 #fff #fff #808080; }
+    .btn-group { display: flex; gap: 4px; margin-top: 6px; }
+    .btn-primary { font-weight: bold; background: #e0e0d8; }
+    .btn-danger { background: #ffd0d0; }
+    .preview-scroll { flex: 1; overflow: auto; background: #808080; display: flex; justify-content: center; padding: 20px; }
+    #rapport { font-family: 'Times New Roman', serif; line-height: 1.4; color: #000; background: #fff; padding: 20mm 15mm 20mm 25mm; width: 210mm; min-height: 297mm; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); font-size: 13px; position: relative; }
 
-    .img-preview { max-width: 100%; max-height: 80px; margin-top: 10px; display: none; border-radius: 2px; border: 1px solid var(--border-color); background: #fff; padding: 5px;}
-    .img-preview.show { display: inline-block; }
-
-    /* Превью */
-    .preview-section { background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; max-height: 92vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .preview-header { background: var(--panel-bg); color: var(--text-main); padding: 12px 20px; font-size: 12px; font-weight: bold; letter-spacing: 1px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); text-transform: uppercase; }
-    .preview-content { flex: 1; overflow-y: auto; padding: 30px; display: flex; justify-content: center; }
-    
-    /* ЛИСТ А4 */
-    #rapport { 
-        font-family: 'Times New Roman', serif; line-height: 1.45; color: #000; background: #fff; 
-        padding: 20mm 15mm 20mm 25mm; width: 100%; max-width: 210mm; min-height: 297mm; 
-        box-shadow: 0 0 20px rgba(0,0,0,0.8); font-size: 14px; position: relative; overflow: hidden;
-    }
-    
-    .incoming-stamp-box { 
-        position: absolute; top: 20mm; left: 20mm; 
-        border: 1px dashed #ccc; width: 50mm; height: 25mm; 
-        font-size: 9px; color: #aaa; 
-        display: flex; align-items: center; justify-content: center; text-align: center; 
-        pointer-events: none;
-    }
-    
-    .doc-address { text-align: right; margin-bottom: 30px; font-size: 14px; white-space: pre-line; line-height: 1.3; font-weight: bold; }
-    .doc-title { text-align: center; font-size: 18px; font-weight: bold; letter-spacing: 3px; margin: 20px 0 5px 0; text-transform: uppercase; }
-    .doc-subject { text-align: center; font-size: 14px; margin-bottom: 30px; white-space: pre-line; font-weight: bold; }
+    .incoming-stamp-box { position: absolute; top: 20mm; left: 20mm; border: 1px dashed #999; width: 50mm; height: 25mm; font-size: 9px; color: #999; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .doc-address { text-align: right; margin-bottom: 30px; white-space: pre-line; font-weight: bold; }
+    .doc-title { text-align: center; font-size: 16px; font-weight: bold; letter-spacing: 3px; margin: 20px 0 5px 0; text-transform: uppercase; }
+    .doc-subject { text-align: center; margin-bottom: 30px; font-weight: bold; }
     .doc-body { text-align: justify; text-indent: 35px; margin-bottom: 12px; white-space: pre-line; }
-    
-    .doc-footer { margin-top: 40px; font-size: 14px; margin-bottom: 30px; }
-    .doc-footer-line { display: flex; justify-content: space-between; align-items: flex-end; }
-    
-    /* Подпись и печать (Связаны вместе) */
-    .signature-wrapper { position: relative; display: flex; justify-content: flex-end; margin-right: 20px; }
-    
+    .doc-footer { margin-top: 40px; margin-bottom: 30px; display: flex; justify-content: space-between; }
+    .signature-wrapper { position: relative; display: flex; justify-content: flex-end; margin-right: 20px; margin-top: 20px; }
     .signature-block { display: flex; flex-direction: column; align-items: flex-end; position: relative; z-index: 2; }
     .signature-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 2px; }
-    .sign-img-container { width: 140px; height: 50px; display: flex; align-items: flex-end; justify-content: center; position: relative; }
-    .sign-img { max-width: 100%; max-height: 100%; object-fit: contain; position: absolute; bottom: 0; }
+    .sign-img-container { width: 140px; height: 50px; position: relative; display: flex; align-items: flex-end; justify-content: center; }
+    .sign-img { max-width: 100%; max-height: 100%; object-fit: contain; position: absolute; bottom: 0; mix-blend-mode: multiply; }
     .sign-line { width: 140px; border-bottom: 1px solid #000; height: 1px; }
-    .sign-name { width: 150px; text-align: center; font-size: 14px; white-space: nowrap; }
+    .sign-name { width: 150px; text-align: center; }
     .sign-labels { display: flex; gap: 10px; font-size: 10px; color: #555; }
     .sign-labels span { width: 140px; text-align: center; }
     .sign-labels span:last-child { width: 150px; }
+    .stamp-container { position: absolute; right: 0px; bottom: -20px; z-index: 1; pointer-events: none; }
+    .stamp-img { width: 100%; height: 100%; object-fit: contain; transform: rotate(-8deg); mix-blend-mode: multiply; }
 
-    /* Печать (стоит поверх подписи, но не съезжает) */
-    .stamp-container { position: absolute; right: 10px; bottom: -10px; z-index: 1; pointer-events: none; }
-    .stamp-img { width: 100%; height: 100%; object-fit: contain; transform: rotate(-8deg); }
+    .game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #d4d0c8; }
+    .game-header { font-weight: bold; margin-bottom: 10px; font-size: 14px; }
+    #tetrisCanvas { border: 2px solid; border-color: #808080 #fff #fff #808080; background: #000; }
+    #snakeCanvas { border: 2px solid; border-color: #808080 #fff #fff #808080; background: #000; }
+    .minesweeper-grid { display: grid; gap: 2px; background: #808080; padding: 2px; border: 2px solid; border-color: #808080 #fff #fff #808080; width: max-content; margin: 10px auto; }
+    .minesweeper-cell { width: 20px; height: 20px; background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .minesweeper-cell.revealed { border: 1px solid #808080; background: #c0c0c0; cursor: default; }
+    .minesweeper-cell.mine { background: #ff0000; }
+    .minesweeper-cell.flag::after { content:'🚩'; font-size:10px; }
+    .chess-board { display: grid; grid-template-columns: repeat(8, 40px); grid-template-rows: repeat(8, 40px); border: 2px solid #000; }
+    .chess-cell { display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; }
+    .chess-cell.light { background: #f0d9b5; }
+    .chess-cell.dark { background: #b58863; }
+    .chess-cell.sel { outline: 3px solid #ff0; }
 
-    .status { margin: 15px; padding: 10px; text-align: center; font-size: 12px; font-weight: bold; border-radius: 3px; display: none; text-transform: uppercase; }
-    .status.success { background: rgba(39, 174, 96, 0.2); color: #2ecc71; border: 1px solid #2ecc71; display: block; }
-    .status.error { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; display: block; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999997; display: none; justify-content: center; align-items: center; }
+    .modal-box { background: #d4d0c8; border: 2px solid; border-color: #fff #808080 #808080 #fff; box-shadow: 2px 2px 10px rgba(0,0,0,0.5); display: flex; flex-direction: column; min-width: 300px; }
+    .modal-header { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 3px 5px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header button { background: #d4d0c8; border: 1px solid; border-color: #fff #808080 #808080 #fff; width: 16px; height: 14px; font-weight: bold; cursor: pointer; }
+    .modal-content { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
 
-    .slider-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
-    .slider-group label { margin: 0; flex: 1; }
-    .slider-group input[type="range"] { flex: 2; accent-color: var(--accent); }
+    #shutdown-screen { position: fixed; inset: 0; background: #000; color: #fff; z-index: 999999; display: none; flex-direction: column; justify-content: center; align-items: center; font-family: 'Courier New', monospace; font-size: 16px; }
 
-    @media (max-width: 1100px) {
-        .main-container { grid-template-columns: 1fr; }
-        .form-section, .preview-section { max-height: none; }
-        #rapport { padding: 15px; min-height: auto; }
-        .incoming-stamp-box { display: none; }
-    }
+    /* ================= КОНСОЛЬ ================= */
+    #secret-console { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 600px; height: 350px; background: rgba(0,0,0,0.95); border: 2px solid #0f0; display: none; flex-direction: column; z-index: 9999999; box-shadow: 0 0 20px rgba(0,255,0,0.3); }
+    #secret-console .header { background: #003300; color: #0f0; padding: 5px 10px; font-family: 'Courier New'; font-size: 12px; display: flex; justify-content: space-between; cursor: move; }
+    #secret-console .body { flex: 1; display: flex; flex-direction: column; padding: 10px; }
+    #secret-out { flex: 1; color: #0f0; font-family: 'Courier New'; font-size: 12px; overflow-y: auto; white-space: pre-wrap; }
+    #secret-input-row { display: flex; gap: 5px; margin-top: 5px; }
+    #secret-input-row input { flex: 1; background: #000; border: 1px solid #0f0; color: #0f0; padding: 4px; font-family: 'Courier New'; outline: none; }
+
+    .access-row { display:flex; align-items:center; gap:6px; padding:6px; border-bottom:1px solid #bbb; background:#fff; font-size:11px; }
+    .access-row .login { font-weight:bold; width:120px; }
+    .access-row select { width:110px; padding:2px; font-size:11px; }
+    .access-row .fio { flex:1; color:#555; }
+    .access-row button { padding:2px 6px; font-size:10px; }
+
+    .toast { position: fixed; bottom: 60px; right: 20px; background:#000080; color:#fff; padding:10px 16px; border:2px solid #fff; z-index:9999999; font-family:Tahoma; font-size:12px; box-shadow:2px 2px 10px rgba(0,0,0,0.5); }
+    .toast.err { background:#a00; }
+    .toast.ok { background:#060; }
+
+    /* ================= МИЛЫЙ ПОМОЩНИК ================= */
+    #cat-assistant { position: fixed; bottom: 40px; right: 20px; width: 150px; height: 150px; z-index: 100000; cursor: pointer; transition: transform 0.2s; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); animation: float 3s ease-in-out infinite; }
+    #cat-assistant:hover { transform: scale(1.1); }
+    #cat-assistant img { width: 100%; height: 100%; object-fit: contain; }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    
+    #cat-bubble { position: absolute; bottom: 160px; right: 20px; background: #fff; border: 2px solid #000; border-radius: 10px; padding: 10px 14px; font-size: 12px; max-width: 260px; display: none; z-index: 100001; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); line-height: 1.4; font-style: italic; }
+    #cat-bubble::after { content: ''; position: absolute; bottom: -10px; right: 30px; border-width: 10px 10px 0; border-style: solid; border-color: #fff transparent transparent transparent; }
+    #cat-bubble::before { content: ''; position: absolute; bottom: -13px; right: 28px; border-width: 12px 12px 0; border-style: solid; border-color: #000 transparent transparent transparent; }
+
+    /* ================= ГЕНЕРАТОР ПРИКАЗОВ ================= */
+    #order-left-panel { width: 40%; display: flex; flex-direction: column; border: 2px solid; border-color: #808080 #fff #fff #808080; background: #d4d0c8; padding: 4px; }
+    #order-right-panel { flex: 1; display: flex; flex-direction: column; border: 2px solid; border-color: #808080 #fff #fff #808080; background: #808080; padding: 0; }
+
+    /* Печать: только #rapport и #order-print */
+    #print-area { display:none; }
     @media print {
-        body { background: #fff; padding: 0; }
-        .form-section, .preview-header, .status, .preview-section { display: none !important; }
-        .main-container { display: block; }
-        .preview-content { background: #fff; padding: 0; display: block; overflow: visible; }
-        #rapport { box-shadow: none; margin: 0; width: 100%; min-height: auto; padding: 20mm 15mm 20mm 25mm !important; }
-        .stamp-img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        body { background: #fff !important; overflow: visible !important; }
+        body::after { display: none !important; }
+        #boot-screen, #login-screen, #register-screen, #desktop, #taskbar, #startMenu,
+        #shutdown-screen, .window, .modal, .toast, #cat-assistant, #cat-bubble, #secret-console { display: none !important; }
+        #print-area { display: block !important; }
+        #print-area #rapport, #print-area #order-print { box-shadow: none; margin: 0; width: 100%; min-height: auto; }
         @page { margin: 0; size: A4; }
     }
 </style>
 </head>
 <body>
 
-<div class="main-container">
-    <div class="form-section">
-        <div class="panel-header">
-            <span>📋 Генератор ВС РФ v9.0</span>
-            <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+<!-- ================= МИЛЫЙ ПОМОЩНИК (Кот-Офицер) ================= -->
+<div id="cat-assistant" onclick="toggleCatMenu(event)" title="Кот-Офицер (кликни для подсказки)">
+    <img id="assistant-img" src="https://i.postimg.cc/JzYSkzs0/2769344857jgv32323232u51.png" alt="Кот-Офицер">
+</div>
+<div id="cat-bubble">Мяу! Я твой помощник. Чем могу помочь?</div>
+
+<!-- ================= СКРЫТАЯ КОНСОЛЬ ================= -->
+<div id="secret-console">
+    <div class="header" onmousedown="startDragSecret(event)">
+        <span>Секретная консоль (Ё)</span>
+        <button onclick="toggleSecretConsole()" style="background:#0f0; border:none; font-weight:bold; cursor:pointer;">X</button>
+    </div>
+    <div class="body">
+        <div id="secret-out">Ожидание ввода... Введите "help".</div>
+        <div id="secret-input-row">
+            <span style="color:#0f0; font-family:'Courier New';">&gt;</span>
+            <input type="text" id="secret-in" onkeydown="handleSecretKey(event)" autocomplete="off">
         </div>
+    </div>
+</div>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-data', this)">📝 Данные</button>
-            <button class="tab-btn" onclick="switchTab('tab-sig', this)">✍️ Подпись</button>
-            <button class="tab-btn" onclick="switchTab('tab-stamp', this)">🖨️ Печать</button>
-            <button class="tab-btn" onclick="switchTab('tab-settings', this)">⚙️ Ещё</button>
+<!-- ================= ЗАГРУЗКА ================= -->
+<div id="boot-screen">
+    <div class="boot-header">Загрузка МСВС 3.0 (ядро 2.4.20-32)</div>
+    <div id="boot-log"></div>
+</div>
+
+<!-- ================= ЛОГИН ================= -->
+<div id="login-screen" style="display:none;">
+    <div class="login-box">
+        <div class="login-header">Вход в систему МСВС 3.0 v29 (Атмосфера)</div>
+        <div class="login-user">
+            <div class="login-avatar"><span>🛡️</span></div>
+            <div style="flex:1;">
+                <div class="login-input"><label>Логин:</label><input type="text" id="loginNick" placeholder="введите логин" autocomplete="off"></div>
+                <div class="login-input"><label>Пароль:</label><input type="password" id="loginPass" placeholder="введите пароль" autocomplete="off"></div>
+            </div>
         </div>
+        <button class="login-btn" onclick="loginOS()">Ввод</button>
+        <div class="login-link" onclick="showRegister()">Регистрация нового аккаунта</div>
+        <div style="font-size:10px; color:#666; margin-top:10px; text-align:center;">Пароли и аккаунты хранятся в облаке Firebase.</div>
+    </div>
+</div>
 
-        <!-- ВКЛАДКА: ДАННЫЕ -->
-        <div id="tab-data" class="tab-content active">
-            <button class="btn-demo" onclick="fillDemoData()">🎲 Заполнить ДЕМО-данными</button>
-
-            <div class="form-group">
-                <label>Выбрать шаблон:</label>
-                <select id="preset" onchange="applyPreset()">
-                    <option value="">-- Выберите шаблон --</option>
-                    <optgroup label="ОТПУСКА">
-                        <option value="vacation_main">Основной отпуск</option>
-                        <option value="vacation_family">По личным обстоятельствам</option>
-                    </optgroup>
-                    <optgroup label="УВОЛЬНЕНИЕ">
-                        <option value="dismissal_contract">По окончании контракта</option>
-                        <option value="dismissal_health">По состоянию здоровья</option>
-                        <option value="dismissal_own">По собственному желанию</option>
-                    </optgroup>
-                    <optgroup label="СЛУЖБА И ОТЧЕТЫ">
-                        <option value="report_work">О проделанной работе</option>
-                        <option value="warehouse_handover">О сдаче имущества на склад</option>
-                        <option value="duty_handover">Сдача дежурства</option>
-                        <option value="dismissal_evening">Увольнение в город</option>
-                        <option value="business_trip">Убытие в командировку</option>
-                        <option value="pass_test">О допуске к зачету</option>
-                    </optgroup>
-                    <optgroup label="ВЫПЛАТЫ">
-                        <option value="pay_material">Материальная помощь</option>
-                    </optgroup>
+<!-- ================= РЕГИСТРАЦИЯ ================= -->
+<div id="register-screen" class="modal">
+    <div class="modal-box" style="width:420px;">
+        <div class="modal-header"><span>Регистрация аккаунта</span><button onclick="hideRegister()">✕</button></div>
+        <div class="modal-content">
+            <div class="login-input"><label>Логин:</label><input type="text" id="regLogin" placeholder="латиницей, без пробелов"></div>
+            <div class="login-input"><label>Пароль:</label><input type="password" id="regPass"></div>
+            <div class="login-input"><label>Повтор пароля:</label><input type="password" id="regPass2"></div>
+            <div class="login-input"><label>ФИО (для журнала):</label><input type="text" id="regFio" placeholder="Иванов Иван Иванович"></div>
+            <div class="login-input">
+                <label>Роль:</label>
+                <select id="regRole">
+                    <option value="soldier">soldier (рядовой)</option>
+                    <option value="officer">officer (офицер)</option>
                 </select>
             </div>
-
-            <div class="row-2">
-                <div class="form-group">
-                    <label>ФИО:</label>
-                    <input type="text" id="fio" placeholder="Петров Иван Сергеевич" oninput="formatFIO(this)">
-                </div>
-                <div class="form-group">
-                    <label>Звание:</label>
-                    <select id="rank">
-                        <option value="">-- Выберите --</option>
-                        <optgroup label="СОЛДАТЫ И СЕРЖАНТЫ">
-                            <option value="рядовой">рядовой</option>
-                            <option value="ефрейтор">ефрейтор</option>
-                            <option value="младший сержант">младший сержант</option>
-                            <option value="сержант">сержант</option>
-                            <option value="старший сержант">старший сержант</option>
-                            <option value="старшина">старшина</option>
-                        </optgroup>
-                        <optgroup label="ПРАПОРЩИКИ">
-                            <option value="прапорщик">прапорщик</option>
-                            <option value="старший прапорщик">старший прапорщик</option>
-                        </optgroup>
-                        <optgroup label="ОФИЦЕРЫ">
-                            <option value="младший лейтенант">младший лейтенант</option>
-                            <option value="лейтенант">лейтенант</option>
-                            <option value="старший лейтенант">старший лейтенант</option>
-                            <option value="капитан">капитан</option>
-                            <option value="майор">майор</option>
-                            <option value="подполковник">подполковник</option>
-                            <option value="полковник">полковник</option>
-                        </optgroup>
-                    </select>
-                </div>
-            </div>
-
-            <div class="row-2">
-                <div class="form-group">
-                    <label>Воинская часть:</label>
-                    <input type="text" id="unit" placeholder="в/ч 12345">
-                </div>
-                <div class="form-group">
-                    <label>Должность:</label>
-                    <input type="text" id="position" placeholder="Командир отделения">
-                </div>
-            </div>
-            
-            <div class="row-2">
-                <div class="form-group">
-                    <label>Дата призыва:</label>
-                    <input type="date" id="serviceStart" onchange="calcSeniority()">
-                </div>
-                <div class="form-group">
-                    <label>Выслуга лет:</label>
-                    <input type="text" id="seniorityResult" readonly placeholder="--" style="background: rgba(0,0,0,0.1);">
-                </div>
-            </div>
-
-            <div class="row-2">
-                <div class="form-group">
-                    <label for="addressPosition">Должность адресата:</label>
-                    <input type="text" id="addressPosition" placeholder="Командир роты">
-                </div>
-                <div class="form-group">
-                    <label for="addressName">Фамилия адресата:</label>
-                    <input type="text" id="addressName" placeholder="Иванов И.И.">
-                </div>
-            </div>
-
-            <div class="row-2">
-                <div class="form-group">
-                    <label>Дата документа:</label>
-                    <input type="date" id="date">
-                </div>
-                <div class="form-group">
-                    <label>Населенный пункт:</label>
-                    <input type="text" id="location" placeholder="г. Москва">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Тема (заголовок):</label>
-                <input type="text" id="subject" placeholder="О разрешении на отпуск">
-            </div>
-
-            <div class="form-group">
-                <label>Содержание:</label>
-                <textarea id="content" placeholder="Прошу..." oninput="updateCharCount()"></textarea>
-                <div class="char-counter" id="charCount">0 символов</div>
-            </div>
-            <button class="btn-danger" onclick="clearForm()" style="width:100%; margin-top:15px;">🧹 Очистить текст</button>
-        </div>
-
-        <!-- ВКЛАДКА: ПОДПИСЬ -->
-        <div id="tab-sig" class="tab-content">
-            <div class="note">Загрузите PNG с прозрачным фоном.</div>
-            
-            <div class="file-upload-wrapper">
-                <div class="file-upload-btn">📁 ВЫБРАТЬ ФАЙЛ ПОДПИСИ</div>
-                <input type="file" id="sigFileInput" accept="image/png" onchange="loadFile(this, 'sig')">
-            </div>
-            
-            <div style="text-align:center;">
-                <img id="sigPreview" class="img-preview" alt="Подпись">
-            </div>
-
-            <button class="btn-export" onclick="openSignatureModal()" style="width:100%; margin-top:15px;">✍️ Нарисовать от руки</button>
-            <button class="btn-danger" onclick="clearImage('sig')" style="width:100%; margin-top:10px;">❌ Удалить подпись</button>
-        </div>
-
-        <!-- ВКЛАДКА: ШТАМП -->
-        <div id="tab-stamp" class="tab-content">
-            <div class="note">Загрузите печать (PNG). Настройте размер ниже.</div>
-            
-            <div class="file-upload-wrapper">
-                <div class="file-upload-btn">📁 ВЫБРАТЬ ФАЙЛ ПЕЧАТИ</div>
-                <input type="file" id="stampFileInput" accept="image/png" onchange="loadFile(this, 'stamp')">
-            </div>
-
-            <div style="text-align:center;">
-                <img id="stampPreview" class="img-preview" alt="Печать">
-            </div>
-            
-            <div class="slider-group" style="margin-top:20px;">
-                <label>Размер:</label>
-                <input type="range" id="stampSize" min="30" max="80" value="50" oninput="updateStampStyle()">
-            </div>
-            <div class="slider-group">
-                <label>Прозрачность:</label>
-                <input type="range" id="stampOpacity" min="30" max="100" value="85" oninput="updateStampStyle()">
-            </div>
-            <button class="btn-danger" onclick="clearImage('stamp')" style="width:100%;">❌ Удалить печать</button>
-        </div>
-
-        <!-- ВКЛАДКА: НАСТРОЙКИ -->
-        <div id="tab-settings" class="tab-content">
-            <div class="note">Бэкап (сохранение ФИО и части на другое устройство).</div>
-            <button class="btn-export" onclick="exportProfile()" style="width:100%; margin-bottom:10px;">📤 Скачать профиль (JSON)</button>
-            
-            <div class="file-upload-wrapper">
-                <div class="file-upload-btn">📥 ЗАГРУЗИТЬ ПРОФИЛЬ</div>
-                <input type="file" id="profileInput" accept=".json" onchange="importProfile(this)">
-            </div>
-
-            <button class="btn-danger" onclick="clearAllData()" style="width:100%; margin-top:20px;">🗑️ Полная очистка</button>
-        </div>
-
-        <button class="btn-main" onclick="renderPreview()">🔄 ОБНОВИТЬ ДОКУМЕНТ</button>
-
-        <div class="button-grid">
-            <button class="btn-export" onclick="downloadPDF()">📄 PDF</button>
-            <button class="btn-export" onclick="downloadPNG()">🖼️ PNG</button>
-            <button class="btn-export" onclick="downloadDOCX()">📝 DOCX</button>
-        </div>
-        <div class="button-grid-2">
-            <button class="btn-export" onclick="window.print()">🖨️ Печать</button>
-            <button class="btn-export" onclick="copyToClipboard()">📋 Копия</button>
-        </div>
-        
-        <div class="status" id="status"></div>
-    </div>
-
-    <div class="preview-section">
-        <div class="preview-header">
-            <span>ПРЕДПРОСМОТР ДОКУМЕНТА</span>
-            <span>ФОРМАТ А4</span>
-        </div>
-        <div class="preview-content">
-            <div id="rapport"></div>
+            <div style="font-size:10px; color:#666;">Роль commander выдаётся командиром.</div>
+            <button class="login-btn" onclick="registerAccount()">Создать аккаунт</button>
         </div>
     </div>
 </div>
 
-<!-- МОДАЛКИ -->
-<div id="signatureModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
-    <div style="background:var(--panel-bg); padding:25px; border-radius:4px; max-width:500px; width:100%; text-align:center; border: 1px solid var(--accent);">
-        <h3 style="margin-bottom:15px; text-transform:uppercase;">Нарисуйте подпись</h3>
-        <canvas id="signatureCanvas" width="400" height="150" style="border:1px solid var(--border-color); background:#fff; touch-action:none;"></canvas>
-        <div class="button-grid-2" style="margin-top:15px;">
-            <button class="btn-export" onclick="clearCanvas()">Очистить</button>
-            <button class="btn-main" style="margin-top:0; padding:10px;" onclick="saveDrawnSignature()">Сохранить</button>
-        </div>
-        <button class="btn-export" onclick="document.getElementById('signatureModal').style.display='none'" style="width:100%; margin-top:10px;">Отмена</button>
+<!-- ================= РАБОЧИЙ СТОЛ ================= -->
+<div id="desktop"><div class="desktop-icons" id="desktopIcons"></div></div>
+
+<div id="taskbar">
+    <button class="start-btn" id="start-btn" onclick="toggleStartMenu(event)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-3z"/></svg> Пуск
+    </button>
+    <div class="taskbar-sep"></div>
+    <div id="task-buttons" style="display:flex; gap:4px; flex:1; overflow:hidden;"></div>
+    <div class="tray">
+        <span class="tray-btn" onclick="openApp('app-pager')" title="Пейджер">📟</span>
+        <span class="tray-btn" onclick="shutdownOS()" title="Завершение работы">🔴</span>
+        <span class="tray-btn" title="Профиль">👤 <span id="trayNick">--</span> <small id="trayRole"></small></span>
+        <span id="clock" style="cursor:default; font-weight:bold;">--:--</span>
     </div>
 </div>
 
-<div id="wizardModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
-    <div style="background:var(--panel-bg); padding:25px; border-radius:4px; max-width:400px; width:100%; border: 1px solid var(--accent);">
-        <h3 style="text-align:center; margin-bottom:15px; text-transform:uppercase;">Доп. данные</h3>
-        <div id="wizardFields"></div>
-        <div class="button-grid-2" style="margin-top:15px;">
-            <button class="btn-export" onclick="closeWizard()">Отмена</button>
-            <button class="btn-main" style="margin-top:0; padding:10px;" onclick="applyWizard()">Вставить</button>
+<div id="startMenu">
+    <div class="start-sidebar"><span>МСВС 3.0</span></div>
+    <div class="start-items" id="startMenuItems"></div>
+</div>
+
+<div id="shutdown-screen"><div>Идет завершение работы МСВС...</div></div>
+
+<!-- ================= ГЕНЕРАТОР РАПОРТОВ ================= -->
+<div class="window" id="app-generator" style="top:50px; left:50px; width:1050px; height:650px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-generator')">
+        <span>📋 Генератор рапортов</span>
+        <div class="controls"><button onclick="minimizeApp('app-generator')">_</button><button onclick="maximizeApp('app-generator')">□</button><button onclick="closeApp('app-generator')">✕</button></div>
+    </div>
+    <div class="menu-bar">
+        <span onclick="saveToJournal()">💾 В журнал</span>
+        <span onclick="aiSuggest()">✨ Подсказать</span>
+        <span onclick="printRapport()">🖨️ Печать</span>
+    </div>
+    <div class="window-content">
+        <div class="work-area">
+            <div class="left-panel">
+                <div class="tabs-container">
+                    <div class="tab active" onclick="switchTab('tab-data', this)">📝 Данные</div>
+                    <div class="tab" onclick="switchTab('tab-sig', this)">✍️ Подпись</div>
+                    <div class="tab" onclick="switchTab('tab-stamp', this)">🖨️ Печать</div>
+                </div>
+                <div class="scroll-content" style="flex:1;">
+                    <div id="tab-data" style="display:block;">
+                        <button class="btn btn-primary" onclick="fillDemoData()" style="width:100%; background:#ffd700; margin-bottom:6px;">🎲 ДЕМО</button>
+                        <fieldset><legend>Шаблон рапорта</legend>
+                            <select id="preset" onchange="applyPreset()">
+                                <option value="">-- Выберите шаблон --</option>
+                                <optgroup label="ОТПУСКА"><option value="vacation_main">Основной отпуск</option><option value="vacation_family">По личным обстоятельствам</option></optgroup>
+                                <optgroup label="УВОЛЬНЕНИЕ"><option value="dismissal_contract">По окончании контракта</option><option value="dismissal_health">По состоянию здоровья</option><option value="dismissal_own">По собственному желанию</option></optgroup>
+                                <optgroup label="СЛУЖБА"><option value="report_work">О проделанной работе</option><option value="warehouse_handover">О сдаче имущества</option><option value="duty_handover">Сдача дежурства</option></optgroup>
+                                <optgroup label="СПЕЦ. ЗАДАЧИ">
+                                    <option value="recon_nvf">Разведданные о НВФ</option>
+                                    <option value="tech_status">О состоянии ВВТ</option>
+                                    <option value="financial_allowance">О доплатах</option>
+                                </optgroup>
+                            </select>
+                        </fieldset>
+                        <fieldset><legend>Личные данные</legend>
+                            <div class="form-row">
+                                <div class="form-col"><label>ФИО:</label><input type="text" id="fio" placeholder="Иванов И.И."></div>
+                                <div class="form-col"><label>Звание:</label>
+                                    <select id="rank">
+                                        <option value="">-- Выберите --</option>
+                                        <option value="рядовой">рядовой</option><option value="сержант">сержант</option><option value="прапорщик">прапорщик</option><option value="лейтенант">лейтенант</option><option value="капитан">капитан</option><option value="майор">майор</option><option value="полковник">полковник</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-col"><label>В/часть:</label><input type="text" id="unit" placeholder="в/ч 12345"></div>
+                                <div class="form-col"><label>Должность:</label><input type="text" id="position" placeholder="Командир отделения"></div>
+                            </div>
+                        </fieldset>
+                        <fieldset><legend>Адресат и документ</legend>
+                            <div class="form-row">
+                                <div class="form-col"><label>Должность адресата:</label><input type="text" id="addressPosition" placeholder="Командир роты"></div>
+                                <div class="form-col"><label>Фамилия:</label><input type="text" id="addressName" placeholder="Петров П.П."></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-col"><label>Дата:</label><input type="date" id="date"></div>
+                                <div class="form-col"><label>Нас. пункт:</label><input type="text" id="location" placeholder="г. Москва"></div>
+                            </div>
+                            <div class="form-row"><div class="form-col"><label>Тема:</label><input type="text" id="subject" placeholder="О разрешении..."></div></div>
+                            <label>Содержание:</label>
+                            <textarea id="content" placeholder="Прошу..."></textarea>
+                        </fieldset>
+                    </div>
+                    <div id="tab-sig" style="display:none;">
+                        <fieldset><legend>Подпись</legend>
+                            <input type="file" id="sigFileInput" accept="image/png" onchange="loadFile(this, 'sig')">
+                            <div style="text-align:center;"><img id="sigPreview" style="max-width:100%; max-height:80px; display:none;"></div>
+                        </fieldset>
+                        <button class="btn" onclick="openSignatureModal()" style="width:100%;">✍️ Нарисовать</button>
+                        <button class="btn btn-danger" onclick="clearSignature()" style="width:100%; margin-top:6px;">🗑️ Удалить подпись</button>
+                    </div>
+                    <div id="tab-stamp" style="display:none;">
+                        <fieldset><legend>Печать</legend>
+                            <input type="file" id="stampFileInput" accept="image/png" onchange="loadFile(this, 'stamp')">
+                            <div style="text-align:center;"><img id="stampPreview" style="max-width:100%; max-height:80px; display:none;"></div>
+                        </fieldset>
+                        <label>Размер: <span id="sizeVal">50</span> мм</label>
+                        <input type="range" id="stampSize" min="30" max="80" value="50" oninput="updateStampStyle()" style="width:100%;">
+                        <label>Прозрачность: <span id="opacityVal">85</span>%</label>
+                        <input type="range" id="stampOpacity" min="20" max="100" value="85" oninput="updateStampStyle()" style="width:100%;">
+                        <button class="btn btn-danger" onclick="clearStamp()" style="width:100%; margin-top:6px;">🗑️ Удалить печать</button>
+                    </div>
+                </div>
+                <div class="btn-group" style="margin-top:4px;">
+                    <button class="btn" style="flex:1;" onclick="downloadPDF()">📄 PDF</button>
+                    <button class="btn" style="flex:1;" onclick="downloadPNG()">🖼️ PNG</button>
+                    <button class="btn" style="flex:1;" onclick="printRapport()">🖨️ Печать</button>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div style="background:#d4d0c8; padding:2px 8px; border-bottom:1px solid #808080; font-weight:bold; font-size:11px;">ПРЕДПРОСМОТР</div>
+                <div class="preview-scroll"><div id="rapport-preview"></div></div>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-/* ============ КОНСТАНТЫ ============ */
-const FIELD_IDS = ['fio','rank','unit','position','addressPosition','addressName','date','location','subject','content'];
+<!-- ================= ГЕНЕРАТОР ПРИКАЗОВ (ОБНОВЛЕННЫЙ) ================= -->
+<div class="window" id="app-orders" style="top:80px; left:80px; width:1050px; height:650px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-orders')">
+        <span>📜 Генератор приказов</span>
+        <div class="controls"><button onclick="minimizeApp('app-orders')">_</button><button onclick="maximizeApp('app-orders')">□</button><button onclick="closeApp('app-orders')">✕</button></div>
+    </div>
+    <div class="menu-bar">
+        <span onclick="downloadOrderPDF()">📄 PDF</span>
+        <span onclick="downloadOrderPNG()">🖼️ PNG</span>
+        <span onclick="printOrder()">🖨️ Печать</span>
+    </div>
+    <div class="window-content">
+        <div class="work-area">
+            <div id="order-left-panel">
+                <div class="scroll-content" style="flex:1;">
+                    <fieldset><legend>Тип документа</legend>
+                        <select id="orderType" onchange="renderOrderPreview()">
+                            <option value="directive">Приказ командира (Директива)</option>
+                            <option value="promotion">Приказ о поощрении</option>
+                            <option value="punishment">Приказ о наказании</option>
+                            <option value="duty_order">Приказ о назначении в наряд</option>
+                            <option value="transfer">Приказ о переводе</option>
+                        </select>
+                    </fieldset>
+                    
+                    <fieldset><legend>Реквизиты</legend>
+                        <div class="form-row">
+                            <div class="form-col"><label>Войсковая часть:</label><input type="text" id="ord_unit" value="63466" oninput="renderOrderPreview()"></div>
+                            <div class="form-col"><label>Город:</label><input type="text" id="ord_city" value="г. Москва" oninput="renderOrderPreview()"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col"><label>Дата:</label><input type="date" id="ord_date" onchange="renderOrderPreview()"></div>
+                            <div class="form-col"><label>Исх. №:</label><input type="text" id="ord_num" value="___" oninput="renderOrderPreview()"></div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset><legend>Командир (подпись)</legend>
+                        <div class="form-row">
+                            <div class="form-col"><label>Звание:</label><input type="text" id="ord_rank" value="Полковник" oninput="renderOrderPreview()"></div>
+                            <div class="form-col"><label>ФИО:</label><input type="text" id="ord_fio" value="Иванов И.И." oninput="renderOrderPreview()"></div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset><legend>Содержание (можно менять)</legend>
+                        <textarea id="ord_body" style="height:150px;" oninput="renderOrderPreview()">В целях обеспечения безопасности, своевременного выявления угроз и поддержания боевой готовности подразделений, ПРИКАЗЫВАЮ:
+1. Каждому военнослужащему вверенного мне соединения вменить в обязанность непрерывное наблюдение и фиксацию данных о численности, вооружении и военной технике (ВВТ) незаконных вооружённых формирований (НВФ).
+2. Выявленные сведения о НВФ подлежат незамедлительному внесению в служебные рапорта установленного образца.
+3. Личному составу обеспечить строгий контроль за вверенным вооружением и военной техникой.</textarea>
+                    </fieldset>
+                </div>
+            </div>
+            <div id="order-right-panel">
+                <div style="background:#d4d0c8; padding:2px 8px; border-bottom:1px solid #808080; font-weight:bold; font-size:11px;">ПРЕДПРОСМОТР ПРИКАЗА</div>
+                <div class="preview-scroll">
+                    <div id="order-preview" style="background:#fff; padding:20mm 15mm 20mm 25mm; font-family:'Times New Roman'; font-size:13px; line-height:1.4; width:210mm; min-height:297mm; box-shadow:2px 2px 10px rgba(0,0,0,0.5);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= ЖУРНАЛ ================= -->
+<div class="window" id="app-journal" style="top:100px; left:100px; width:600px; height:450px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-journal')">
+        <span>📖 Журнал</span>
+        <div class="controls"><button onclick="minimizeApp('app-journal')">_</button><button onclick="closeApp('app-journal')">✕</button></div>
+    </div>
+    <div class="menu-bar">
+        <span onclick="renderJournal()">🔄 Обновить</span>
+        <span onclick="filterJournal('all')">Все</span>
+        <span onclick="filterJournal('mine')">Мои</span>
+        <span onclick="filterJournal('soldier')">Солдаты</span>
+        <span onclick="filterJournal('officer')">Офицеры</span>
+        <span onclick="filterJournal('commander')">Командиры</span>
+    </div>
+    <div class="window-content" style="background:#fff; padding:10px; overflow-y:auto;" id="journalList"></div>
+</div>
+
+<!-- ================= СТРОЕВАЯ / НАРЯД / ВООРУЖЕНИЕ ================= -->
+<div class="window" id="app-morning-report" style="top:100px; left:150px; width:500px; height:450px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-morning-report')">
+        <span>📊 Строевая записка</span>
+        <div class="controls"><button onclick="minimizeApp('app-morning-report')">_</button><button onclick="closeApp('app-morning-report')">✕</button></div>
+    </div>
+    <div class="window-content" style="padding:10px;">
+        <label>Дата:</label><input type="date" id="mrDate">
+        <div class="form-row">
+            <div class="form-col"><label>Всего по списку:</label><input type="number" id="mrTotal" value="100"></div>
+            <div class="form-col"><label>В наличии:</label><input type="number" id="mrPresent" value="95"></div>
+        </div>
+        <fieldset><legend>Отсутствуют (причины)</legend>
+            <div class="form-row">
+                <div class="form-col"><label>В наряде:</label><input type="number" id="mrDuty" value="2"></div>
+                <div class="form-col"><label>В отпуске:</label><input type="number" id="mrLeave" value="1"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-col"><label>На лечении:</label><input type="number" id="mrSick" value="1"></div>
+                <div class="form-col"><label>Иные причины:</label><input type="number" id="mrOther" value="1"></div>
+            </div>
+        </fieldset>
+        <button class="btn btn-primary" onclick="generateMorningReport()" style="margin-top:10px;">📄 Сформировать</button>
+    </div>
+</div>
+
+<div class="window" id="app-duty" style="top:100px; left:150px; width:500px; height:400px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-duty')">
+        <span>👮 Суточный наряд</span>
+        <div class="controls"><button onclick="minimizeApp('app-duty')">_</button><button onclick="closeApp('app-duty')">✕</button></div>
+    </div>
+    <div class="window-content" style="padding:10px;">
+        <label>Дата:</label><input type="date" id="dutyDate">
+        <label>Дежурный:</label><input type="text" id="dutyOfficer">
+        <label>Помощник:</label><input type="text" id="dutyAssistant">
+        <label>Патрульные:</label><input type="text" id="dutyPatrol">
+        <button class="btn btn-primary" onclick="generateDutyOrder()" style="margin-top:10px;">📄 Сформировать</button>
+    </div>
+</div>
+
+<div class="window" id="app-weapons" style="top:100px; left:150px; width:600px; height:400px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-weapons')">
+        <span>🔫 Вооружение</span>
+        <div class="controls"><button onclick="minimizeApp('app-weapons')">_</button><button onclick="closeApp('app-weapons')">✕</button></div>
+    </div>
+    <div class="window-content" style="padding:10px; display:flex; flex-direction:column;">
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="text" id="weaponName" placeholder="Наименование (АК-74)" style="flex:2;">
+            <input type="text" id="weaponSerial" placeholder="Номер" style="flex:1;">
+            <button class="btn btn-primary" onclick="addWeapon()">➕</button>
+        </div>
+        <div id="weaponList" style="flex:1; overflow-y:auto; background:#fff; padding:5px; border:1px solid #999;"></div>
+    </div>
+</div>
+
+<!-- ================= УПРАВЛЕНИЕ ДОСТУПОМ ================= -->
+<div class="window" id="app-access" style="top:80px; left:200px; width:760px; height:480px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-access')">
+        <span>👥 Управление доступом</span>
+        <div class="controls"><button onclick="minimizeApp('app-access')">_</button><button onclick="closeApp('app-access')">✕</button></div>
+    </div>
+    <div class="menu-bar">
+        <span onclick="renderAccessList()">🔄 Обновить</span>
+        <span onclick="toggleSecretConsole()">🖥️ Консоль (Ё)</span>
+        <span onclick="exportBackup()">💾 Экспорт</span>
+        <span onclick="importBackup()">📥 Импорт</span>
+    </div>
+    <div class="window-content" style="background:#fff; overflow-y:auto;" id="accessList"></div>
+</div>
+
+<!-- ================= ИГРЫ ================= -->
+<div class="window" id="app-tetris" style="top:100px; left:300px; width:300px; height:550px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-tetris')">
+        <span>🧱 Тетрис</span>
+        <div class="controls"><button onclick="minimizeApp('app-tetris')">_</button><button onclick="closeApp('app-tetris')">✕</button></div>
+    </div>
+    <div class="window-content"><div class="game-container"><div class="game-header">Счёт: <span id="tetrisScore">0</span></div><canvas id="tetrisCanvas" width="240" height="480"></canvas><button class="btn btn-primary" onclick="startTetris()">Начать</button></div></div>
+</div>
+
+<div class="window" id="app-snake" style="top:100px; left:300px; width:450px; height:500px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-snake')">
+        <span>🐍 Змейка</span>
+        <div class="controls"><button onclick="minimizeApp('app-snake')">_</button><button onclick="closeApp('app-snake')">✕</button></div>
+    </div>
+    <div class="window-content"><div class="game-container"><div class="game-header">Счёт: <span id="snakeScore">0</span></div><canvas id="snakeCanvas" width="400" height="400"></canvas><button class="btn btn-primary" onclick="startSnake()">Начать</button></div></div>
+</div>
+
+<div class="window" id="app-minesweeper" style="top:100px; left:300px; width:400px; height:480px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-minesweeper')">
+        <span>💣 Сапер</span>
+        <div class="controls"><button onclick="minimizeApp('app-minesweeper')">_</button><button onclick="closeApp('app-minesweeper')">✕</button></div>
+    </div>
+    <div class="window-content">
+        <div style="padding:4px; text-align:center; font-size:11px;">ЛКМ — открыть, ПКМ — флаг. Мины: 10</div>
+        <div id="minesweeperGrid" class="minesweeper-grid"></div>
+        <div id="minesweeperMsg" style="text-align:center; font-weight:bold; margin-top:6px;"></div>
+    </div>
+</div>
+
+<div class="window" id="app-chess" style="top:80px; left:200px; width:400px; height:500px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-chess')">
+        <span>♟️ Шахматы</span>
+        <div class="controls"><button onclick="minimizeApp('app-chess')">_</button><button onclick="closeApp('app-chess')">✕</button></div>
+    </div>
+    <div class="window-content">
+        <div class="chess-board" id="chessBoard"></div>
+        <div id="chessStatus" style="text-align:center; font-weight:bold; margin:4px;">Ход белых</div>
+        <button class="btn btn-primary" onclick="initChess()">Сброс</button>
+    </div>
+</div>
+
+<!-- ================= ПЕЙДЖЕР ================= -->
+<div class="window" id="app-pager" style="top:100px; left:300px; width:450px; height:500px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-pager')">
+        <span>📟 Терминал связи</span>
+        <div class="controls"><button onclick="minimizeApp('app-pager')">_</button><button onclick="closeApp('app-pager')">✕</button></div>
+    </div>
+    <div class="window-content" style="padding:6px; display:flex; flex-direction:column;">
+        <div style="display:flex; gap:4px; margin-bottom:4px;">
+            <select id="pagerChannel" onchange="renderPager()">
+                <option value="general">Общий канал</option>
+                <option value="command">Командный канал</option>
+                <option value="private">Личные</option>
+            </select>
+            <button class="btn" onclick="renderPager()">🔄</button>
+        </div>
+        <div id="pagerMessages" style="flex:1; background:#000; color:#0f0; padding:10px; overflow-y:auto; font-family:'Courier New'; font-size:11px; margin-bottom:5px;"></div>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="pagerInput" placeholder="Сообщение..." style="flex:1;" onkeydown="handlePagerKey(event)">
+            <button class="btn btn-primary" onclick="sendPagerMessage()">Отправить</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= НАСТРОЙКИ ================= -->
+<div class="window" id="app-settings" style="top:80px; left:150px; width:420px; height:400px; display:none;">
+    <div class="title-bar" onmousedown="startDrag(event, 'app-settings')">
+        <span>⚙️ Настройки</span>
+        <div class="controls"><button onclick="minimizeApp('app-settings')">_</button><button onclick="closeApp('app-settings')">✕</button></div>
+    </div>
+    <div class="window-content" style="padding:15px; overflow-y:auto;">
+        <fieldset><legend>Профиль</legend>
+            <div id="profileInfo" style="font-size:11px; line-height:1.6;"></div>
+        </fieldset>
+        <label>Тема:</label>
+        <select onchange="changeTheme(this.value)">
+            <option value="default">Синяя</option>
+            <option value="green">Зелёная</option>
+            <option value="gray">Серая</option>
+        </select>
+        <button class="btn btn-danger" onclick="resetProfile()" style="width:100%; margin-top:15px;">🗑️ Сброс локальных данных</button>
+        <button class="btn btn-danger" onclick="logout()" style="width:100%; margin-top:8px;">🚪 Выйти из аккаунта</button>
+    </div>
+</div>
+
+<!-- ================= МОДАЛКА ПОДПИСИ ================= -->
+<div id="signatureModal" class="modal">
+    <div class="modal-box" style="width:450px;">
+        <div class="modal-header"><span>Подпись</span><button onclick="closeModal('signatureModal')">✕</button></div>
+        <div class="modal-content">
+            <canvas id="signatureCanvas" width="400" height="150" style="background:#fff;"></canvas>
+            <button class="btn" onclick="clearCanvas()">Очистить</button>
+            <button class="btn btn-primary" onclick="saveDrawnSignature()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Контейнер для печати -->
+<div id="print-area"><div id="rapport"></div><div id="order-print"></div></div>
+
+<script type="module">
+/* ==================== ИНИЦИАЛИЗАЦИЯ FIREBASE ==================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCKXJiCvZ-tm3QS3xSsx942pxjvwGoknVI",
+  authDomain: "msvs-1deab.firebaseapp.com",
+  databaseURL: "https://msvs-1deab-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "msvs-1deab",
+  storageBucket: "msvs-1deab.firebasestorage.app",
+  messagingSenderId: "1033528706185",
+  appId: "1:1033528706185:web:e640d26424d6c19c56b258",
+  measurementId: "G-4367JJ0CSS"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+let currentRole = 'soldier';
+let currentLogin = '';
+let currentFio = '';
+let openWindows = new Set();
+let zIndexCounter = 100;
 const today = new Date().toISOString().split('T')[0];
+
+// Firebase требует email, поэтому делаем фейковый
+function getFakeEmail(login) { return `${login.toLowerCase()}@msvs.local`; }
+
+/* ==================== УТИЛИТЫ ==================== */
+function toast(msg, type) {
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type || '');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+function esc(str) { return String(str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ==================== КОТ-ОФИЦЕР (ЦИТАТЫ) ==================== */
+window.toggleCatMenu = function() {
+    const bubble = document.getElementById('cat-bubble');
+    if (bubble.style.display === 'block') {
+        bubble.style.display = 'none';
+        return;
+    }
+    const quotes = [
+        "«Есть такая профессия — Родину защищать!» — «Офицеры»",
+        "«Кто в армии служил, тот в цирке не смеётся»",
+        "«Дембель неизбежен, как закат солнца» — «ДМБ»",
+        "«Ты, главное, не ссы, мы же русские!» — «Солдаты»",
+        "«Шагом марш в казарму!»",
+        "«Я тебя по-отечески предупреждаю — не зли меня!» — «Солдаты»",
+        "«В армии главное — не умение, а находчивость»",
+        "«Товарищ прапорщик, вы не правы!» — «Солдаты»",
+        "«Служу Отечеству!»",
+        "«Я лучше в карауле постою, чем это всё слушать» — «Солдаты»",
+        "«Взвод, строиться!»",
+        "«Если вы такие умные — почему вы строем не ходите?»",
+        "«Отставить панику!»",
+        "«Всё, что нас не убивает — делает нас сильнее»"
+    ];
+    bubble.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+    bubble.style.display = 'block';
+    setTimeout(() => { bubble.style.display = 'none'; }, 6000);
+};
+
+/* ==================== СЕКРЕТНАЯ КОНСОЛЬ (ПО КЛАВИШЕ Ё) ==================== */
+let isSecretConsoleOpen = false;
+let secretConsoleDrag = null;
+
+window.toggleSecretConsole = function() {
+    const con = document.getElementById('secret-console');
+    isSecretConsoleOpen = !isSecretConsoleOpen;
+    con.style.display = isSecretConsoleOpen ? 'flex' : 'none';
+    if (isSecretConsoleOpen) {
+        document.getElementById('secret-in').focus();
+    }
+}
+
+window.startDragSecret = function(e) {
+    if (e.target.tagName === 'BUTTON') return;
+    const con = document.getElementById('secret-console');
+    const rect = con.getBoundingClientRect();
+    secretConsoleDrag = { offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+    document.addEventListener('mousemove', dragSecretMove);
+    document.addEventListener('mouseup', dragSecretEnd);
+}
+
+function dragSecretMove(e) {
+    if (!secretConsoleDrag) return;
+    const con = document.getElementById('secret-console');
+    let newX = e.clientX - secretConsoleDrag.offsetX;
+    let newY = e.clientY - secretConsoleDrag.offsetY;
+    con.style.left = newX + 'px';
+    con.style.bottom = 'auto';
+    con.style.top = newY + 'px';
+    con.style.transform = 'none';
+}
+
+function dragSecretEnd() {
+    secretConsoleDrag = null;
+    document.removeEventListener('mousemove', dragSecretMove);
+    document.removeEventListener('mouseup', dragSecretEnd);
+}
+
+window.handleSecretKey = function(e) {
+    if (e.key === 'Enter') {
+        const input = document.getElementById('secret-in');
+        const cmd = input.value.trim();
+        if (!cmd) return;
+        input.value = '';
+        const out = document.getElementById('secret-out');
+        out.textContent += '\n> ' + cmd;
+        out.scrollTop = out.scrollHeight;
+        processSecretCommand(cmd);
+    }
+}
+
+function processSecretCommand(raw) {
+    const parts = raw.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const out = document.getElementById('secret-out');
+
+    if (cmd === 'help') {
+        out.textContent += `\nДоступные команды:
+  help                         — этот список
+  clear                        — очистить
+  sync                         — синхронизировать профиль`;
+    } else if (cmd === 'clear') {
+        out.textContent = 'Консоль очищена.';
+    } else if (cmd === 'sync') {
+        out.textContent += '\nСинхронизация с Firebase...';
+        if (auth.currentUser) {
+            get(child(ref(db), 'users/' + auth.currentUser.uid)).then(snapshot => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    currentRole = data.role;
+                    currentFio = data.fio;
+                    applyRole(data.role);
+                    updateProfileUI();
+                    out.textContent += `\nПрофиль обновлен: роль ${data.role}.`;
+                }
+            });
+        }
+    } else {
+        out.textContent += `\nНеизвестная команда: ${cmd}. Введите help.`;
+    }
+    out.scrollTop = out.scrollHeight;
+}
+
+// Глобальный перехват клавиши Ё (и ` / ~)
+document.addEventListener('keydown', (e) => {
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+    if (e.key === 'ё' || e.key === 'Ё' || e.key === '`' || e.key === '~' || e.code === 'Backquote') {
+        e.preventDefault();
+        window.toggleSecretConsole();
+    }
+});
+
+/* ==================== ВХОД / РЕГИСТРАЦИЯ ==================== */
+window.showRegister = function() { document.getElementById('register-screen').style.display = 'flex'; }
+window.hideRegister = function() { document.getElementById('register-screen').style.display = 'none'; }
+
+window.registerAccount = async function() {
+    const login = document.getElementById('regLogin').value.trim().toLowerCase();
+    const pass = document.getElementById('regPass').value;
+    const pass2 = document.getElementById('regPass2').value;
+    const fio = document.getElementById('regFio').value.trim();
+    const role = document.getElementById('regRole').value;
+
+    if (!/^[a-z0-9_\-]{3,20}$/.test(login)) { toast('Логин: 3-20 символов, латиница/цифры/_/-', 'err'); return; }
+    if (pass.length < 6) { toast('Пароль минимум 6 символов (требование Firebase)', 'err'); return; }
+    if (pass !== pass2) { toast('Пароли не совпадают', 'err'); return; }
+    if (role === 'commander') { toast('Роль commander нельзя выбрать при регистрации', 'err'); return; }
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, getFakeEmail(login), pass);
+        const user = userCredential.user;
+
+        await set(ref(db, 'users/' + user.uid), {
+            login: login,
+            role: role,
+            fio: fio || login,
+            created: new Date().toLocaleString('ru-RU')
+        });
+
+        toast('Аккаунт создан! Теперь войдите.', 'ok');
+        window.hideRegister();
+        document.getElementById('loginNick').value = login;
+        document.getElementById('loginPass').value = '';
+    } catch (error) {
+        console.error(error);
+        if (error.code === 'auth/email-already-in-use') toast('Этот логин уже занят', 'err');
+        else toast('Ошибка: ' + error.message, 'err');
+    }
+}
+
+window.loginOS = async function() {
+    const loginRaw = document.getElementById('loginNick').value.trim().toLowerCase();
+    const passRaw = document.getElementById('loginPass').value.trim();
+
+    if (!loginRaw || !passRaw) { toast('Введите логин и пароль', 'err'); return; }
+
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, getFakeEmail(loginRaw), passRaw);
+        const user = userCredential.user;
+
+        const snapshot = await get(child(ref(db), `users/${user.uid}`));
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            startSession(loginRaw, data.role, data.fio);
+            toast('Успешный вход', 'ok');
+        } else {
+            toast('Данные профиля не найдены', 'err');
+        }
+    } catch (error) {
+        console.error(error);
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            toast('Неверный логин или пароль', 'err');
+        } else {
+            toast('Ошибка входа: ' + error.message, 'err');
+        }
+    }
+}
+
+function startSession(login, role, fio) {
+    // Закрываем старые окна (если они есть)
+    if (typeof openWindows !== 'undefined') {
+        openWindows.forEach(id => window.closeApp(id));
+        openWindows.clear();
+    }
+    document.getElementById('task-buttons').innerHTML = '';
+
+    currentLogin = login;
+    currentRole = role;
+    currentFio = fio;
+    
+    localStorage.setItem('msvs_nick', login);
+    localStorage.setItem('msvs_role', role);
+    localStorage.setItem('msvs_fio', fio);
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('desktop').style.display = 'block';
+    document.getElementById('taskbar').style.display = 'flex';
+    
+    updateProfileUI();
+    applyRole(role);
+    setTimeout(() => window.openApp('app-generator'), 300);
+}
+
+window.logout = async function() {
+    if (!confirm('Выйти из аккаунта?')) return;
+    try {
+        await signOut(auth);
+    } catch (e) { console.error(e); }
+
+    if (typeof openWindows !== 'undefined') {
+        openWindows.forEach(id => window.closeApp(id));
+        openWindows.clear();
+    }
+    document.getElementById('task-buttons').innerHTML = '';
+    
+    document.getElementById('desktop').style.display = 'none';
+    document.getElementById('taskbar').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('loginPass').value = '';
+    currentLogin = ''; currentRole = 'soldier'; currentFio = '';
+}
+
+/* ==================== РОЛИ И ИНТЕРФЕЙС ==================== */
+const ROLE_PERMISSIONS = {
+    soldier: ['app-generator','app-pager','app-tetris','app-snake','app-minesweeper','app-chess','app-settings'],
+    officer: ['app-generator','app-pager','app-tetris','app-snake','app-minesweeper','app-chess','app-settings','app-orders','app-journal','app-morning-report','app-duty','app-weapons'],
+    commander: ['app-generator','app-pager','app-tetris','app-snake','app-minesweeper','app-chess','app-settings','app-orders','app-journal','app-morning-report','app-duty','app-weapons','app-access']
+};
+const APP_TITLES = {
+    'app-generator':'📋 Генератор', 'app-orders':'📜 Приказы', 'app-journal':'📖 Журнал',
+    'app-morning-report':'📊 Строевая', 'app-duty':'👮 Наряд', 'app-weapons':'🔫 Вооружение',
+    'app-tetris':'🧱 Тетрис', 'app-snake':'🐍 Змейка', 'app-minesweeper':'💣 Сапер',
+    'app-chess':'♟️ Шахматы', 'app-pager':'📟 Пейджер', 'app-settings':'⚙️ Настройки',
+    'app-access':'👥 Доступ'
+};
+
+window.applyRole = function(role) {
+    currentRole = role;
+    document.getElementById('desktopIcons').innerHTML = '';
+    document.getElementById('startMenuItems').innerHTML = '';
+    const allowed = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.soldier;
+
+    allowed.forEach(id => {
+        if (id === 'app-settings') return;
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'desktop-icon';
+        iconDiv.ondblclick = () => window.openApp(id);
+        const parts = APP_TITLES[id].split(' ');
+        iconDiv.innerHTML = `<div class="icon-img">${parts[0]}</div><div class="icon-text">${parts.slice(1).join(' ')}</div>`;
+        document.getElementById('desktopIcons').appendChild(iconDiv);
+    });
+
+    const serviceItems = allowed.filter(id => ['app-generator','app-orders','app-journal','app-morning-report','app-duty','app-weapons'].includes(id));
+    const adminItems = allowed.filter(id => ['app-access'].includes(id));
+    const gameItems = allowed.filter(id => ['app-tetris','app-snake','app-minesweeper','app-chess'].includes(id));
+
+    let menuHtml = '';
+    if (serviceItems.length) {
+        menuHtml += `<div class="start-item"><span>📁</span> Служба<div class="start-submenu">`;
+        serviceItems.forEach(id => menuHtml += `<div class="start-item" onclick="window.openApp('${id}'); window.toggleStartMenu()">${APP_TITLES[id]}</div>`);
+        menuHtml += `</div></div>`;
+    }
+    if (adminItems.length) {
+        menuHtml += `<div class="start-item"><span>🔐</span> Администрирование<div class="start-submenu">`;
+        adminItems.forEach(id => menuHtml += `<div class="start-item" onclick="window.openApp('${id}'); window.toggleStartMenu()">${APP_TITLES[id]}</div>`);
+        menuHtml += `</div></div>`;
+    }
+    if (gameItems.length) {
+        menuHtml += `<div class="start-item"><span>🎮</span> Игры<div class="start-submenu">`;
+        gameItems.forEach(id => menuHtml += `<div class="start-item" onclick="window.openApp('${id}'); window.toggleStartMenu()">${APP_TITLES[id]}</div>`);
+        menuHtml += `</div></div>`;
+    }
+    menuHtml += `<div class="start-divider"></div>`;
+    menuHtml += `<div class="start-item" onclick="window.openApp('app-settings'); window.toggleStartMenu()"><span>⚙️</span> Настройки</div>`;
+    menuHtml += `<div class="start-item" onclick="window.shutdownOS()"><span>🔴</span> Завершение работы</div>`;
+    document.getElementById('startMenuItems').innerHTML = menuHtml;
+}
+
+window.updateProfileUI = function() {
+    document.getElementById('trayNick').textContent = currentLogin || '--';
+    document.getElementById('trayRole').textContent = currentRole ? '('+currentRole+')' : '';
+    renderProfileInfo();
+}
+
+function renderProfileInfo() {
+    const info = document.getElementById('profileInfo');
+    if (!info) return;
+    info.innerHTML = `<b>Логин:</b> ${esc(currentLogin)}<br><b>Роль:</b> ${esc(currentRole)}<br><b>ФИО:</b> ${esc(currentFio || '-')}<br><b>Статус:</b> Облачный аккаунт`;
+}
+
+window.resetProfile = function() { if (confirm('Сбросить локальные данные? (аккаунты в Firebase останутся)')) { localStorage.clear(); location.reload(); } }
+window.changeTheme = function(theme) { document.body.classList.remove('theme-green','theme-gray'); if (theme==='green') document.body.classList.add('theme-green'); if (theme==='gray') document.body.classList.add('theme-gray'); }
+
+/* ==================== ОКНА ==================== */
+window.openApp = function(id) {
+    const allowed = ROLE_PERMISSIONS[currentRole] || ROLE_PERMISSIONS.soldier;
+    if (!allowed.includes(id)) { toast('Доступ запрещён для вашей роли!', 'err'); return; }
+    const win = document.getElementById(id); if (!win) return;
+    win.style.display = 'flex'; win.classList.remove('minimized'); win.style.zIndex = ++zIndexCounter; openWindows.add(id); updateTaskbar();
+    if (id === 'app-minesweeper') initMinesweeper();
+    if (id === 'app-chess') initChess();
+    if (id === 'app-journal') renderJournal();
+    if (id === 'app-orders') { renderOrderPreview(); document.getElementById('ord_date').value = today; }
+    if (id === 'app-weapons') renderWeapons();
+    if (id === 'app-access') renderAccessList();
+    if (id === 'app-pager') renderPager();
+    if (id === 'app-settings') { renderProfileInfo(); }
+}
+
+window.closeApp = function(id) {
+    const win = document.getElementById(id); if (win) win.style.display = 'none';
+    openWindows.delete(id); updateTaskbar();
+    if (id==='app-tetris') clearInterval(tetrisInterval);
+    if (id==='app-snake') clearInterval(snakeInterval);
+}
+window.minimizeApp = function(id) { const win = document.getElementById(id); if (win) win.classList.add('minimized'); updateTaskbar(); }
+window.maximizeApp = function(id) { const win = document.getElementById(id); if (win) win.classList.toggle('maximized'); }
+window.updateTaskbar = function() {
+    const container = document.getElementById('task-buttons'); container.innerHTML = '';
+    openWindows.forEach(id => {
+        const win = document.getElementById(id);
+        if (win && win.style.display !== 'none') {
+            const isMin = win.classList.contains('minimized');
+            const title = win.querySelector('.title-bar span').textContent;
+            const btn = document.createElement('div');
+            btn.className = 'task-btn' + (isMin ? '' : ' active');
+            btn.innerHTML = `<span>${isMin ? '▫️' : '🔲'}</span> ${title}`;
+            btn.onclick = () => {
+                if (win.classList.contains('minimized')) { win.classList.remove('minimized'); win.style.zIndex = ++zIndexCounter; }
+                else { win.classList.add('minimized'); }
+                updateTaskbar();
+            };
+            container.appendChild(btn);
+        }
+    });
+}
+let dragData = null;
+window.startDrag = function(e, id) {
+    if (e.target.tagName === 'BUTTON') return;
+    const win = document.getElementById(id); if (!win || win.classList.contains('maximized')) return;
+    const rect = win.getBoundingClientRect();
+    dragData = { id, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+    win.style.zIndex = ++zIndexCounter;
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd); e.preventDefault();
+}
+function dragMove(e) {
+    if (!dragData) return; const win = document.getElementById(dragData.id);
+    let newX = e.clientX - dragData.offsetX; let newY = e.clientY - dragData.offsetY;
+    if (newX < -100) newX = -100; if (newY < 0) newY = 0; if (newY > window.innerHeight - 40) newY = window.innerHeight - 40;
+    win.style.left = newX + 'px'; win.style.top = newY + 'px';
+}
+function dragEnd() { dragData = null; document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); }
+
+window.toggleStartMenu = function(e) { if (e) e.stopPropagation(); document.getElementById('startMenu').classList.toggle('show'); }
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('startMenu');
+    if (menu.classList.contains('show') && !menu.contains(e.target) && !document.getElementById('start-btn').contains(e.target)) menu.classList.remove('show');
+});
+window.shutdownOS = function() {
+    if (confirm('Завершить работу?')) {
+        document.getElementById('startMenu').classList.remove('show');
+        openWindows.forEach(id => window.closeApp(id));
+        document.getElementById('shutdown-screen').style.display = 'flex';
+        setTimeout(() => { document.body.innerHTML = '<div style="background:#000; height:100vh;"></div>'; }, 3000);
+    }
+}
+setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}); }, 1000);
+
+/* ==================== УПРАВЛЕНИЕ ДОСТУПОМ (FIREBASE) ==================== */
+window.renderAccessList = async function() {
+    if (currentRole !== 'commander') { toast('Только командир', 'err'); return; }
+    const list = document.getElementById('accessList');
+    list.innerHTML = '<p style="padding:10px;">Загрузка данных из облака...</p>';
+
+    try {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, 'users'));
+        
+        if (snapshot.exists()) {
+            const users = snapshot.val();
+            const entries = Object.entries(users);
+            
+            list.innerHTML = entries.map(([uid, u]) => `
+                <div class="access-row">
+                    <span class="login">${esc(u.login)}${u.login === currentLogin ? ' (вы)' : ''}</span>
+                    <select onchange="window.changeUserRoleCloud('${uid}', '${esc(u.login)}', this.value)">
+                        <option value="soldier" ${u.role==='soldier'?'selected':''}>soldier</option>
+                        <option value="officer" ${u.role==='officer'?'selected':''}>officer</option>
+                        <option value="commander" ${u.role==='commander'?'selected':''}>commander</option>
+                    </select>
+                    <span class="fio">${esc(u.fio||'')}</span>
+                </div>
+            `).join('');
+        } else {
+            list.innerHTML = '<p style="padding:10px;">Нет пользователей в базе</p>';
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<p style="padding:10px; color:red;">Ошибка загрузки</p>';
+    }
+}
+
+window.changeUserRoleCloud = async function(uid, login, newRole) {
+    if (currentRole !== 'commander') return;
+    try {
+        await set(ref(db, 'users/' + uid + '/role'), newRole);
+        toast(`Роль ${login} изменена на ${newRole}`, 'ok');
+    } catch (e) {
+        console.error(e);
+        toast('Ошибка смены роли', 'err');
+    }
+}
+
+/* ==================== РЕЗЕРВНОЕ КОПИРОВАНИЕ ==================== */
+window.exportBackup = function() {
+    if (currentRole !== 'commander') { toast('Только командир', 'err'); return; }
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k.startsWith('msvs_') || k.startsWith('rapport_')) data[k] = localStorage.getItem(k);
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `msvs_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    toast('Экспорт готов', 'ok');
+}
+window.importBackup = function() {
+    if (currentRole !== 'commander') { toast('Только командир', 'err'); return; }
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.json,application/json';
+    inp.onchange = (e) => {
+        const f = e.target.files[0]; if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+            try {
+                const obj = JSON.parse(r.result);
+                if (!confirm('Импорт перезапишет совпадающие ключи. Продолжить?')) return;
+                Object.entries(obj).forEach(([k,v]) => localStorage.setItem(k, v));
+                toast('Импорт выполнен. Перезайдите.', 'ok');
+                setTimeout(() => location.reload(), 800);
+            } catch(err) { toast('Ошибка файла', 'err'); }
+        };
+        r.readAsText(f);
+    };
+    inp.click();
+}
+
+/* ==================== ГЕНЕРАТОР ПРИКАЗОВ (ОБНОВЛЕН) ==================== */
+window.renderOrderPreview = function() {
+    const type = document.getElementById('orderType').value;
+    const unit = document.getElementById('ord_unit').value;
+    const city = document.getElementById('ord_city').value;
+    const num = document.getElementById('ord_num').value;
+    const dateVal = document.getElementById('ord_date').value;
+    const rank = document.getElementById('ord_rank').value;
+    const fio = document.getElementById('ord_fio').value;
+    const body = document.getElementById('ord_body').value;
+
+    // Форматирование даты
+    let dateStr = '«__» __________ 20__ г.';
+    if (dateVal) {
+        const [y,m,d] = dateVal.split('-');
+        dateStr = `«${d}» ${['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][m-1]} ${y} г.`;
+    }
+
+    let html = '';
+
+    if (type === 'directive') {
+        html = `
+            <div style="text-align:right; font-size:10px;">СЕКРЕТНО<br>Экз. № ___</div>
+            <div style="text-align:center; font-weight:bold; font-size:16px; margin-top:20px;">ПРИКАЗ</div>
+            <div style="text-align:center; font-weight:bold;">Командира войсковой части ${esc(unit)}</div>
+            <div style="display:flex; justify-content:space-between; margin:10px 0;">
+                <span>${dateStr} № ${esc(num)}</span>
+                <span>${esc(city)}</span>
+            </div>
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px;">О порядке ведения учёта формирований, не взаимодействующих с ВГР, и обеспечения сохранности ВВТ</div>
+            <div style="text-align:justify; white-space:pre-wrap;">${esc(body)}</div>
+            <div style="margin-top:40px; text-align:right;">
+                <div><b>Командир войсковой части ${esc(unit)}</b></div>
+                <div><b>${esc(rank)}</b> _________________ / ${esc(fio)} /</div>
+            </div>
+        `;
+    } else if (type === 'promotion') {
+        html = `
+            <div style="text-align:center; font-weight:bold; font-size:16px; margin-top:20px;">ПРИКАЗ</div>
+            <div style="text-align:center; font-weight:bold;">Командира войсковой части ${esc(unit)}</div>
+            <div style="display:flex; justify-content:space-between; margin:10px 0;">
+                <span>${dateStr} № ${esc(num)}</span>
+                <span>${esc(city)}</span>
+            </div>
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px;">О поощрении личного состава</div>
+            <div style="text-align:justify; white-space:pre-wrap;">${esc(body)}</div>
+            <div style="margin-top:40px; text-align:right;">
+                <div><b>Командир войсковой части ${esc(unit)}</b></div>
+                <div><b>${esc(rank)}</b> _________________ / ${esc(fio)} /</div>
+            </div>
+        `;
+    } else if (type === 'punishment') {
+        html = `
+            <div style="text-align:center; font-weight:bold; font-size:16px; margin-top:20px;">ПРИКАЗ</div>
+            <div style="text-align:center; font-weight:bold;">Командира войсковой части ${esc(unit)}</div>
+            <div style="display:flex; justify-content:space-between; margin:10px 0;">
+                <span>${dateStr} № ${esc(num)}</span>
+                <span>${esc(city)}</span>
+            </div>
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px;">О наложении дисциплинарного взыскания</div>
+            <div style="text-align:justify; white-space:pre-wrap;">${esc(body)}</div>
+            <div style="margin-top:40px; text-align:right;">
+                <div><b>Командир войсковой части ${esc(unit)}</b></div>
+                <div><b>${esc(rank)}</b> _________________ / ${esc(fio)} /</div>
+            </div>
+        `;
+    } else if (type === 'duty_order') {
+        html = `
+            <div style="text-align:center; font-weight:bold; font-size:16px; margin-top:20px;">ПРИКАЗ</div>
+            <div style="text-align:center; font-weight:bold;">Командира войсковой части ${esc(unit)}</div>
+            <div style="display:flex; justify-content:space-between; margin:10px 0;">
+                <span>${dateStr} № ${esc(num)}</span>
+                <span>${esc(city)}</span>
+            </div>
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px;">О назначении в суточный наряд</div>
+            <div style="text-align:justify; white-space:pre-wrap;">${esc(body)}</div>
+            <div style="margin-top:40px; text-align:right;">
+                <div><b>Командир войсковой части ${esc(unit)}</b></div>
+                <div><b>${esc(rank)}</b> _________________ / ${esc(fio)} /</div>
+            </div>
+        `;
+    } else if (type === 'transfer') {
+        html = `
+            <div style="text-align:center; font-weight:bold; font-size:16px; margin-top:20px;">ПРИКАЗ</div>
+            <div style="text-align:center; font-weight:bold;">Командира войсковой части ${esc(unit)}</div>
+            <div style="display:flex; justify-content:space-between; margin:10px 0;">
+                <span>${dateStr} № ${esc(num)}</span>
+                <span>${esc(city)}</span>
+            </div>
+            <div style="text-align:center; font-weight:bold; margin-bottom:20px;">О переводе к новому месту службы</div>
+            <div style="text-align:justify; white-space:pre-wrap;">${esc(body)}</div>
+            <div style="margin-top:40px; text-align:right;">
+                <div><b>Командир войсковой части ${esc(unit)}</b></div>
+                <div><b>${esc(rank)}</b> _________________ / ${esc(fio)} /</div>
+            </div>
+        `;
+    }
+
+    document.getElementById('order-preview').innerHTML = html;
+}
+
+window.printOrder = function() {
+    const html = document.getElementById('order-preview').innerHTML;
+    document.getElementById('order-print').innerHTML = html;
+    window.print();
+}
+
+window.downloadOrderPDF = function() {
+    window.renderOrderPreview();
+    const el = document.getElementById('order-preview').cloneNode(true);
+    el.style.boxShadow='none'; el.style.margin='0'; el.style.width='794px'; el.style.background='#fff';
+    html2pdf().set({ margin:0, filename:`order_${today}.pdf`, html2canvas:{scale:2}, jsPDF:{format:'a4'} }).from(el).save();
+}
+
+window.downloadOrderPNG = function() {
+    window.renderOrderPreview();
+    const el = document.getElementById('order-preview').cloneNode(true);
+    el.style.position='absolute'; el.style.left='-9999px'; document.body.appendChild(el);
+    html2canvas(el,{scale:2}).then(c => { const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download=`order_${today}.png`; a.click(); document.body.removeChild(el); });
+}
+
+/* ==================== ГЕНЕРАТОР РАПОРТОВ ==================== */
+const FIELD_IDS = ['fio','rank','unit','position','addressPosition','addressName','date','location','subject','content'];
 let signatureData = localStorage.getItem('rapport_signature') || '';
 let stampData = localStorage.getItem('rapport_stamp') || '';
 let stampSize = localStorage.getItem('rapport_stamp_size') || '50';
 let stampOpacity = localStorage.getItem('rapport_stamp_opacity') || '85';
-let statusTimeoutId = null;
-let docType = 'рапорт';
 
-/* ============ УТИЛИТЫ ============ */
-function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tabs .tab-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    btn.classList.add('active');
+window.switchTab = function(tabId, el) {
+    document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block'; el.classList.add('active');
 }
-
 function formatDate(dateStr) {
     if (!dateStr) return '«__» __________ 20__ г.';
-    const [y, m, d] = dateStr.split('-').map(Number);
+    const [y,m,d] = dateStr.split('-').map(Number);
     const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     return `${d} ${months[m-1]} ${y} г.`;
 }
-
 function getShortName(fio) {
     if (!fio) return '________________';
     const parts = fio.trim().split(/\s+/);
@@ -476,475 +1275,493 @@ function getShortName(fio) {
     if (parts.length === 2) return `${parts[0]} ${parts[1].charAt(0)}.`;
     return parts[0];
 }
+function collectData() { const data = {}; FIELD_IDS.forEach(id => { const el = document.getElementById(id); data[id] = el ? el.value.trim() : ''; }); return data; }
 
-function formatFIO(el) {
-    // Убираем лишние пробелы
-    el.value = el.value.replace(/\s+/g, ' ');
+function buildRapportHtml() {
+    const d = collectData();
+    let addrHtml = ''; if (d.addressPosition || d.addressName) addrHtml = `<div class="doc-address">${esc(d.addressPosition)} ${esc(d.addressName)}</div>`;
+    const subjectHtml = d.subject ? `<div class="doc-subject">${esc(d.subject)}</div>` : '';
+    const intro = `Я, ${esc(d.rank) || '____'} ${esc(d.fio) || '________________'}, ${esc(d.unit) || '________________'}, ${esc(d.position) || '________________'}, докладываю:`;
+    const signImage = signatureData ? `<img src="${signatureData}" class="sign-img">` : '';
+    const signHtml = `
+        <div class="doc-footer"><div>${formatDate(d.date)}</div><div>${esc(d.location) || '________________'}</div></div>
+        <div class="signature-wrapper">
+            <div class="signature-block">
+                <div class="signature-row"><div class="sign-img-container">${signImage}</div><div class="sign-name">${esc(getShortName(d.fio))}</div></div>
+                <div class="signature-row" style="align-items:flex-start;"><div class="sign-line"></div><div class="sign-line"></div></div>
+                <div class="sign-labels"><span>(подпись)</span><span>(инициалы и фамилия)</span></div>
+            </div>
+            ${stampData ? `<div class="stamp-container" style="width:${stampSize}mm; height:${stampSize}mm;"><img src="${stampData}" class="stamp-img" style="opacity:${stampOpacity/100};"></div>` : ''}
+        </div>`;
+    return `<div class="incoming-stamp-box">МЕСТО ДЛЯ<br>ВХОДЯЩЕГО<br>ШТАМПА</div>${addrHtml}<div class="doc-title">РАПОРТ</div>${subjectHtml}<div class="doc-body">${intro}</div><div class="doc-body">${esc(d.content).replace(/\n/g,'<br>') || '[ТЕКСТ]'}</div>${signHtml}`;
+}
+window.renderPreview = function() {
+    document.getElementById('rapport-preview').innerHTML = buildRapportHtml();
+    document.getElementById('rapport').innerHTML = buildRapportHtml();
+}
+window.printRapport = function() {
+    window.renderPreview();
+    window.print();
 }
 
-function esc(str) { return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c])); }
-
-function collectData() {
-    const data = {};
-    FIELD_IDS.forEach(id => {
-        const el = document.getElementById(id);
-        data[id] = el ? el.value.trim() : '';
-    });
-    return data;
-}
-
-function showStatus(message, type) {
-    if (statusTimeoutId) clearTimeout(statusTimeoutId);
-    const el = document.getElementById('status');
-    el.textContent = message; 
-    el.className = `status ${type}`;
-    statusTimeoutId = setTimeout(() => { el.className = 'status'; }, 4000);
-}
-
-function clearForm() {
-    if(confirm('Очистить текстовые поля? Подпись и печать останутся.')) {
-        FIELD_IDS.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
-        renderPreview();
-        saveDraft();
-        updateCharCount();
-    }
-}
-
-function updateCharCount() {
-    const len = document.getElementById('content').value.length;
-    document.getElementById('charCount').textContent = `${len} символов`;
-}
-
-/* ============ ВЫСЛУГА ============ */
-function calcSeniority() {
-    const startStr = document.getElementById('serviceStart').value;
-    const resEl = document.getElementById('seniorityResult');
-    if (!startStr) { resEl.value = '--'; return; }
-    const start = new Date(startStr);
-    const now = new Date();
-    
-    if (start > now) { resEl.value = 'Ошибка даты'; return; }
-
-    let years = now.getFullYear() - start.getFullYear();
-    let months = now.getMonth() - start.getMonth();
-    let days = now.getDate() - start.getDate();
-
-    if (days < 0) {
-        months--;
-        days += new Date(now.getFullYear(), now.getMonth(), 0).getDate();
-    }
-    if (months < 0) { years--; months += 12; }
-
-    resEl.value = `${years} лет, ${months} мес., ${days} дн.`;
-}
-
-/* ============ ДЕМО-РЕЖИМ ============ */
-function fillDemoData() {
-    document.getElementById('fio').value = "Иванов Иван Иванович";
-    document.getElementById('rank').value = "капитан";
-    document.getElementById('unit').value = "в/ч 12345, 2-й мотострелковый батальон";
-    document.getElementById('position').value = "Командир 1-й роты";
+window.fillDemoData = function() {
+    document.getElementById('fio').value = currentFio || (currentLogin ? currentLogin.toUpperCase() : 'Иванов Иван Иванович');
+    document.getElementById('rank').value = currentRole === 'commander' ? 'полковник' : currentRole === 'officer' ? 'капитан' : 'рядовой';
+    document.getElementById('unit').value = "в/ч 12345";
+    document.getElementById('position').value = "Командир отделения";
     document.getElementById('addressPosition').value = "Командир батальона";
     document.getElementById('addressName').value = "Петров П.П.";
     document.getElementById('location').value = "г. Москва";
     document.getElementById('subject').value = "О предоставлении основного отпуска";
-    document.getElementById('content').value = "Прошу Вашего разрешения на предоставление мне основного отпуска за 2026 год с 10 октября 2026 г. по 10 ноября 2026 г. сроком на 31 сутки.\n\nМесто проведения отпуска: г. Сочи.\n\nПрошу рассмотреть вопрос положительно.";
-    calcSeniority();
-    renderPreview();
-    showStatus('✓ ДЕМО-данные заполнены', 'success');
+    document.getElementById('content').value = "Прошу Вашего разрешения...";
+    window.renderPreview();
 }
-
-/* ============ РЕНДЕР ============ */
-function renderPreview() {
-    const d = collectData();
-    
-    let addrHtml = '';
-    if (d.addressPosition || d.addressName) {
-        addrHtml = `<div class="doc-address">${esc(d.addressPosition)} ${esc(d.addressName)}</div>`;
-    }
-
-    let titleText = 'РАПОРТ';
-    const subjectHtml = d.subject ? `<div class="doc-subject">${esc(d.subject)}</div>` : '';
-    
-    let intro = `Я, ${esc(d.rank) || '____'} ${esc(d.fio) || '________________'}, ${esc(d.unit) || '________________'}, ${esc(d.position) || '________________'}, докладываю:`;
-    
-    const signImage = signatureData ? `<img src="${signatureData}" class="sign-img">` : '';
-    const signHtml = `
-        <div class="doc-footer">
-            <div class="doc-footer-line">
-                <div>${formatDate(d.date)}</div>
-                <div>${esc(d.location) || '________________'}</div>
-            </div>
-        </div>
-        
-        <div class="signature-wrapper">
-            <div class="signature-block">
-                <div class="signature-row">
-                    <div class="sign-img-container">
-                        ${signImage}
-                    </div>
-                    <div class="sign-name">${esc(getShortName(d.fio))}</div>
-                </div>
-                <div class="signature-row" style="align-items: flex-start;">
-                    <div class="sign-line"></div>
-                    <div class="sign-line"></div>
-                </div>
-                <div class="sign-labels">
-                    <span>(подпись)</span>
-                    <span>(инициалы и фамилия)</span>
-                </div>
-            </div>
-            <!-- Печать теперь привязана к подписи и не съезжает -->
-            ${stampData ? `<div class="stamp-container" style="width: ${stampSize}mm; height: ${stampSize}mm;"><img src="${stampData}" class="stamp-img" style="opacity: ${stampOpacity / 100};"></div>` : ''}
-        </div>
-    `;
-
-    document.getElementById('rapport').innerHTML = `
-        <div class="incoming-stamp-box">МЕСТО ДЛЯ<br>ВХОДЯЩЕГО<br>ШТАМПА</div>
-        ${addrHtml}
-        <div class="doc-title">${titleText}</div>
-        ${subjectHtml}
-        <div class="doc-body">${intro}</div>
-        <div class="doc-body">${esc(d.content).replace(/\n/g, '<br>') || '[ТЕКСТ ДОКУМЕНТА]'}</div>
-        ${signHtml}
-    `;
-    updateCharCount();
+window.aiSuggest = function() {
+    const subj = document.getElementById('subject').value.toLowerCase();
+    let text = '';
+    if (subj.includes('отпуск')) text = 'Прошу Вашего разрешения предоставить мне основной отпуск с «__» ________ 20__ г. по «__» ________ 20__ г. с выездом в г. ________.';
+    else if (subj.includes('увольн')) text = 'Прошу Вашего ходатайства об увольнении меня с военной службы по окончании срока контракта.';
+    else if (subj.includes('дежур')) text = 'Докладываю, что дежурство по части мною сдано в полном объёме, материальные средства и документация переданы согласно описи.';
+    else if (subj.includes('работ')) text = 'Докладываю о проделанной работе за период с «__» ________ 20__ г. по «__» ________ 20__ г. Все поставленные задачи выполнены в полном объёме.';
+    else text = 'Прошу Вашего разрешения...\n\n(уточните тему для более точной формулировки)';
+    document.getElementById('content').value = text;
+    window.renderPreview();
 }
-
-function updateStampStyle() {
-    stampSize = document.getElementById('stampSize').value;
-    stampOpacity = document.getElementById('stampOpacity').value;
-    localStorage.setItem('rapport_stamp_size', stampSize);
-    localStorage.setItem('rapport_stamp_opacity', stampOpacity);
-    renderPreview();
+const WIZARD_PRESETS = {
+    vacation_main:{subject:'О предоставлении основного отпуска',content:'Прошу Вашего разрешения предоставить мне основной отпуск с «__» ________ 20__ г. по «__» ________ 20__ г.'},
+    dismissal_contract:{subject:'Об увольнении по окончании контракта',content:'Прошу Вашего ходатайства об увольнении меня с военной службы по окончании срока контракта.'},
+    dismissal_health:{subject:'Об увольнении по состоянию здоровья',content:'Прошу Вашего ходатайства об увольнении меня с военной службы по состоянию здоровья.'},
+    dismissal_own:{subject:'Об увольнении по собственному желанию',content:'Прошу Вашего ходатайства об увольнении меня с военной службы по собственному желанию.'},
+    vacation_family:{subject:'О предоставлении отпуска по личным обстоятельствам',content:'Прошу предоставить мне отпуск по личным обстоятельствам на ___ суток.'},
+    report_work:{subject:'О проделанной работе',content:'Докладываю о проделанной работе...'},
+    warehouse_handover:{subject:'О сдаче имущества',content:'Прошу Вашего разрешения сдать имущество по описи...'},
+    duty_handover:{subject:'О сдаче дежурства',content:'Докладываю, что дежурство сдано...'},
+    recon_nvf:{subject:'Разведданные о НВФ',content:'Докладываю, что в ходе выполнения задач по охране сектора «Б» (координаты: 45°12\' с.ш., 38°45\' в.д.) были обнаружены признаки присутствия незаконного вооружённого формирования (НВФ), не взаимодействующего с ВГР.\nВыявленные данные:\n1. Предположительная численность: до 15 человек.\n2. Вооружение: стрелковое оружие, 1 ед. РПГ.\n3. Передвижение: на кустарно бронированном пикапе (1 ед.).\nПрошу: внести данные в оперативную базу и разрешить проведение разведывательного мероприятия.'},
+    tech_status:{subject:'О состоянии ВВТ',content:'Докладываю, что во вверенном мне взводе проведен осмотр закреплённой военной техники (ВВТ).\nСостояние техники:\n1. БМП-2 (бортовой № 315): технически исправна.\n2. Автомобиль Урал-4320 (бортовой № 102): требуется замена ремня ГРМ.\n3. Вооружение (АК-74): 12 ед., чистка проведена.\nПрошу: выделить запасные части для ремонта автомобиля Урал-4320.'},
+    financial_allowance:{subject:'О доплатах',content:'Прошу Вашего разрешения на начисление дополнительных выплат военнослужащим вверенного мне подразделения.\nОснование:\n1. Участие в боевых выходах: ряд. Алексеев Г.Г. — 5 выходов (5 000 руб.), ефр. Федоров М.М. — 3 выхода (3 000 руб.).\n2. Участие в тактических учениях: серж. Николаев К.К. — 2 учения (5 000 руб.).\nОбщая сумма к начислению: 13 000 руб.'}
+};
+window.applyPreset = function() {
+    const key = document.getElementById('preset').value; if (!key) return;
+    const p = WIZARD_PRESETS[key];
+    if (p.subject) document.getElementById('subject').value = p.subject;
+    if (p.content) document.getElementById('content').value = p.content;
+    window.renderPreview(); document.getElementById('preset').value = '';
 }
-
-/* ============ ЗАГРУЗКА КАРТИНОК ============ */
-function loadFile(input, type) {
-    const file = input.files[0];
-    if (!file) return;
+window.loadFile = function(input, type) {
+    const file = input.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-        if (type === 'sig') {
-            signatureData = e.target.result;
-            localStorage.setItem('rapport_signature', signatureData);
-            document.getElementById('sigPreview').src = signatureData;
-            document.getElementById('sigPreview').classList.add('show');
-        } else {
-            stampData = e.target.result;
-            localStorage.setItem('rapport_stamp', stampData);
-            document.getElementById('stampPreview').src = stampData;
-            document.getElementById('stampPreview').classList.add('show');
-        }
-        renderPreview();
-        showStatus('✓ Изображение загружено', 'success');
-    };
-    reader.readAsDataURL(file);
+        if (type === 'sig') { signatureData = e.target.result; localStorage.setItem('rapport_signature', signatureData); document.getElementById('sigPreview').src = signatureData; document.getElementById('sigPreview').style.display = 'inline-block'; }
+        else { stampData = e.target.result; localStorage.setItem('rapport_stamp', stampData); document.getElementById('stampPreview').src = stampData; document.getElementById('stampPreview').style.display = 'inline-block'; }
+        window.renderPreview();
+    }; reader.readAsDataURL(file);
 }
-
-function clearImage(type) {
-    if (type === 'sig') {
-        signatureData = '';
-        localStorage.removeItem('rapport_signature');
-        document.getElementById('sigPreview').classList.remove('show');
-        document.getElementById('sigFileInput').value = '';
-    } else {
-        stampData = '';
-        localStorage.removeItem('rapport_stamp');
-        document.getElementById('stampPreview').classList.remove('show');
-        document.getElementById('stampFileInput').value = '';
-    }
-    renderPreview();
+window.clearSignature = function() { signatureData=''; localStorage.removeItem('rapport_signature'); document.getElementById('sigPreview').style.display='none'; window.renderPreview(); }
+window.clearStamp = function() { stampData=''; localStorage.removeItem('rapport_stamp'); document.getElementById('stampPreview').style.display='none'; window.renderPreview(); }
+window.updateStampStyle = function() {
+    stampSize = document.getElementById('stampSize').value; stampOpacity = document.getElementById('stampOpacity').value;
+    document.getElementById('sizeVal').textContent = stampSize; document.getElementById('opacityVal').textContent = stampOpacity;
+    localStorage.setItem('rapport_stamp_size', stampSize); localStorage.setItem('rapport_stamp_opacity', stampOpacity);
+    window.renderPreview();
 }
-
-/* ============ РИСОВАНИЕ ПОДПИСИ ============ */
 let canvas, ctx, isDrawing = false;
-
-function openSignatureModal() {
+window.openSignatureModal = function() {
     document.getElementById('signatureModal').style.display = 'flex';
-    canvas = document.getElementById('signatureCanvas');
-    ctx = canvas.getContext('2d');
-    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (signatureData) {
-        const img = new Image();
-        img.onload = () => {
-            const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-            const x = (canvas.width / 2) - (img.width / 2) * scale;
-            const y = (canvas.height / 2) - (img.height / 2) * scale;
-            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-        };
-        img.src = signatureData;
-    }
-
-    const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const t = e.touches ? e.touches[0] : e;
-        return { x: t.clientX - rect.left, y: t.clientY - rect.top };
-    };
-
-    canvas.onmousedown = (e) => { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
-    canvas.onmousemove = (e) => { if (isDrawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+    canvas = document.getElementById('signatureCanvas'); ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; ctx.clearRect(0,0,canvas.width,canvas.height);
+    canvas.onmousedown = (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); };
+    canvas.onmousemove = (e) => { if (isDrawing) { ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); } };
     canvas.onmouseup = () => isDrawing = false;
-    canvas.onmouseleave = () => isDrawing = false;
-
-    canvas.ontouchstart = (e) => { e.preventDefault(); isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
-    canvas.ontouchmove = (e) => { e.preventDefault(); if (isDrawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
-    canvas.ontouchend = (e) => { e.preventDefault(); isDrawing = false; };
 }
-
-function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-function saveDrawnSignature() {
-    signatureData = canvas.toDataURL('image/png');
-    localStorage.setItem('rapport_signature', signatureData);
-    document.getElementById('sigPreview').src = signatureData;
-    document.getElementById('sigPreview').classList.add('show');
-    document.getElementById('signatureModal').style.display = 'none';
-    renderPreview();
-    showStatus('✓ Подпись сохранена', 'success');
+window.clearCanvas = function() { ctx.clearRect(0,0,canvas.width,canvas.height); }
+window.saveDrawnSignature = function() {
+    signatureData = canvas.toDataURL('image/png'); localStorage.setItem('rapport_signature', signatureData);
+    document.getElementById('sigPreview').src = signatureData; document.getElementById('sigPreview').style.display = 'inline-block';
+    document.getElementById('signatureModal').style.display = 'none'; window.renderPreview();
 }
-
-/* ============ ПРЕСЕТЫ ============ */
-const WIZARD_PRESETS = {
-    vacation_main: {
-        subject: 'О предоставлении основного отпуска',
-        fields: [
-            { id: 'year', label: 'За какой год', placeholder: '2026' },
-            { id: 'date_start', label: 'Дата начала', placeholder: '10.10.2026' },
-            { id: 'date_end', label: 'Дата окончания', placeholder: '10.11.2026' },
-            { id: 'days', label: 'Количество суток', placeholder: '31', type: 'number' }
-        ],
-        template: 'Прошу Вашего разрешения на предоставление мне основного отпуска за {year} год с {date_start} по {date_end} сроком на {days} суток.\n\nМесто проведения отпуска: ________________.\n\nПрошу рассмотреть вопрос положительно.'
-    },
-    dismissal_contract: {
-        subject: 'Об увольнении по окончании контракта',
-        content: 'Прошу Вашего ходатайства об увольнении меня с военной службы по окончании срока контракта (пп. «б» п. 1 ст. 51 ФЗ-53).\n\nВыслуга лет на момент увольнения составит: ___ лет.\n\nПрошу направить меня на ВВК для определения категории годности.'
-    },
-    report_work: {
-        subject: 'О проделанной работе',
-        fields: [
-            { id: 'period', label: 'За период', placeholder: 'с 1 по 15 октября 2026 г.' },
-            { id: 'tasks', label: 'Выполненные задачи', placeholder: 'проведение ТО, ремонт техники' }
-        ],
-        template: 'Докладываю о проделанной работе за {period}.\n\nЗа отчетный период мною были выполнены следующие задачи:\n- {tasks}\n- ________________\n- ________________\n\nЗамечаний по службе не имею.'
-    },
-    vacation_family: { subject: 'О предоставлении отпуска по личным обстоятельствам', content: 'Прошу предоставить мне отпуск по личным обстоятельствам сроком ___ суток.\n\nПричина: ________________________________.' },
-    dismissal_health: { subject: 'Об увольнении по состоянию здоровья', content: 'Прошу Вашего ходатайства об увольнении меня с военной службы по состоянию здоровья (заключение ВВК № ___).' },
-    dismissal_own: { subject: 'Об увольнении по собственному желанию', content: 'Прошу Вашего ходатайства об увольнении меня с военной службы по собственному желанию (пп. «а» п. 1 ст. 51 ФЗ-53).' },
-    warehouse_handover: { subject: 'О сдаче имущества на склад', content: 'Прошу Вашего разрешения на сдачу на склад следующего имущества: ________________.\n\nСостояние имущества: удовлетворительное.' },
-    duty_handover: { subject: 'О сдаче дежурства', content: 'Докладываю о сдаче дежурства по ________________.\n\nЗа время несения службы происшествий не произошло.' },
-    dismissal_evening: { subject: 'Об увольнении в город', content: 'Прошу Вашего разрешения на увольнение меня в город сроком до ___ часов ___ минут «___» ____________ 20__ г.\n\nОбязуюсь соблюдать воинскую дисциплину.' },
-    business_trip: { subject: 'О направлении в командировку', content: 'Прошу Вашего разрешения на убытие в служебную командировку в ________________ сроком на ___ суток.\n\nЦель командировки: ________________.' },
-    pass_test: { subject: 'О допуске к зачету', content: 'Прошу Вашего ходатайства о допуске меня к сдаче зачета по ________________.\n\nТематика зачета изучена в полном объеме.' },
-    pay_material: { subject: 'О выплате материальной помощи', content: 'Прошу Вашего разрешения на выплату мне материальной помощи в размере ______ рублей.\n\nОснование: ________________.' }
-};
-
-function applyPreset() {
-    const select = document.getElementById('preset');
-    const key = select.value;
-    if (!key) return;
-    const preset = WIZARD_PRESETS[key];
-    
-    if (preset.subject) document.getElementById('subject').value = preset.subject;
-    if (preset.content) document.getElementById('content').value = preset.content;
-
-    if (preset.fields) {
-        openWizard(key);
-    } else {
-        renderPreview(); 
-        saveDraft();
-        showStatus('✓ Шаблон применён', 'success');
-        select.value = '';
-    }
-}
-
-function openWizard(key) {
-    const preset = WIZARD_PRESETS[key];
-    const fieldsContainer = document.getElementById('wizardFields');
-    fieldsContainer.innerHTML = '';
-    preset.fields.forEach(f => {
-        fieldsContainer.innerHTML += `<div class="form-group"><label>${f.label}:</label><input type="${f.type || 'text'}" id="wiz_${f.id}" placeholder="${f.placeholder}"></div>`;
-    });
-    document.getElementById('wizardModal').style.display = 'flex';
-    document.getElementById('wizardModal').dataset.presetKey = key;
-}
-
-function closeWizard() {
-    document.getElementById('wizardModal').style.display = 'none';
-    document.getElementById('preset').value = ''; 
-}
-
-function applyWizard() {
-    const key = document.getElementById('wizardModal').dataset.presetKey;
-    const preset = WIZARD_PRESETS[key];
-    let text = preset.template;
-    preset.fields.forEach(f => {
-        const val = document.getElementById(`wiz_${f.id}`).value.trim() || `[${f.label}]`;
-        text = text.replace(new RegExp(`{${f.id}}`, 'g'), val);
-    });
-    document.getElementById('subject').value = preset.subject;
-    document.getElementById('content').value = text;
-    renderPreview(); 
-    saveDraft();
-    closeWizard(); 
-    showStatus('✓ Данные вставлены', 'success');
-}
-
-/* ============ ПРОФИЛЬ ============ */
-function exportProfile() {
-    const data = collectData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-    const a = document.createElement('a'); 
-    a.href = URL.createObjectURL(blob);
-    a.download = `profile_${today}.json`; 
-    a.click();
-    showStatus('✓ Профиль сохранен', 'success');
-}
-
-function importProfile(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            FIELD_IDS.forEach(id => {
-                const el = document.getElementById(id);
-                if (el && data[id] !== undefined) el.value = data[id];
-            });
-            renderPreview();
-            saveDraft();
-            showStatus('✓ Профиль загружен', 'success');
-        } catch {
-            showStatus('❌ Ошибка файла', 'error');
-        }
-    };
-    reader.readAsText(file);
-}
-
-function clearAllData() {
-    if (confirm('Удалить ВСЕ данные (текст, подписи, печати)?')) {
-        localStorage.clear();
-        location.reload();
-    }
-}
-
-/* ============ ЭКСПОРТ ============ */
-function getDocElement() {
+window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; }
+window.downloadPDF = function() {
+    window.renderPreview();
     const el = document.getElementById('rapport').cloneNode(true);
-    el.style.boxShadow = 'none'; el.style.margin = '0'; el.style.width = '794px'; el.style.background = '#fff';
-    return el;
+    el.style.boxShadow='none'; el.style.margin='0'; el.style.width='794px'; el.style.background='#fff';
+    html2pdf().set({ margin:0, filename:`doc_${today}.pdf`, html2canvas:{scale:2}, jsPDF:{format:'a4'} }).from(el).save();
+}
+window.downloadPNG = function() {
+    window.renderPreview();
+    const el = document.getElementById('rapport').cloneNode(true);
+    el.style.position='absolute'; el.style.left='-9999px'; document.body.appendChild(el);
+    html2canvas(el,{scale:2}).then(c => { const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download=`doc_${today}.png`; a.click(); document.body.removeChild(el); });
 }
 
-function downloadPDF() {
-    const el = getDocElement();
-    html2pdf().set({ margin: 0, filename: `doc_${today}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { format: 'a4' } })
-    .from(el).save().then(() => showStatus('✓ PDF сохранен', 'success'));
+/* ==================== ЖУРНАЛ ==================== */
+let journalFilter = 'all';
+window.saveToJournal = function() {
+    const data = collectData();
+    if (!data.fio) { toast('Заполните ФИО!', 'err'); return; }
+    if (currentRole === 'soldier') {
+        const firstWord = data.fio.split(' ')[0].toLowerCase();
+        const okLogin = firstWord === currentLogin.toLowerCase();
+        const okFio = currentFio && currentFio.toLowerCase().startsWith(firstWord);
+        if (!okLogin && !okFio) { toast('Солдат может сохранять только свои рапорты', 'err'); return; }
+    }
+    const journal = JSON.parse(localStorage.getItem('msvs_journal') || '[]');
+    journal.unshift({ id: Date.now(), date: new Date().toLocaleString('ru-RU'), author: currentRole, login: currentLogin, data });
+    localStorage.setItem('msvs_journal', JSON.stringify(journal.slice(0,100)));
+    toast('Сохранено в локальный журнал!', 'ok');
+}
+window.filterJournal = function(mode) { journalFilter = mode; window.renderJournal(); }
+window.renderJournal = function() {
+    const list = document.getElementById('journalList');
+    let journal = JSON.parse(localStorage.getItem('msvs_journal') || '[]');
+    if (currentRole === 'soldier') journal = journal.filter(j => j.login === currentLogin);
+    if (journalFilter === 'mine') journal = journal.filter(j => j.login === currentLogin);
+    else if (['soldier','officer','commander'].includes(journalFilter)) journal = journal.filter(j => j.author === journalFilter);
+    if (!journal.length) { list.innerHTML = '<p>Журнал пуст (данные хранятся локально)</p>'; return; }
+    list.innerHTML = journal.map(e => `
+        <div style="padding:8px; border-bottom:1px solid #ccc; cursor:pointer; position:relative;" onclick="window.loadFromJournal(${e.id})">
+            <b>${esc(e.data.subject || 'Без темы')}</b><br>
+            <small>${esc(e.data.fio)} | ${esc(e.date)} | ${esc(e.author)} (${esc(e.login||'-')})</small>
+            ${currentRole==='commander' ? `<button onclick="event.stopPropagation(); window.deleteJournalEntry(${e.id})" style="position:absolute; right:6px; top:6px; font-size:10px; background:#ffd0d0;">✕</button>` : ''}
+        </div>
+    `).join('');
+}
+window.deleteJournalEntry = function(id) {
+    if (currentRole !== 'commander') return;
+    if (!confirm('Удалить запись?')) return;
+    let journal = JSON.parse(localStorage.getItem('msvs_journal') || '[]');
+    journal = journal.filter(e => e.id !== id);
+    localStorage.setItem('msvs_journal', JSON.stringify(journal));
+    window.renderJournal();
+}
+window.loadFromJournal = function(id) {
+    const journal = JSON.parse(localStorage.getItem('msvs_journal') || '[]');
+    const entry = journal.find(e => e.id === id); if (!entry) return;
+    FIELD_IDS.forEach(f => { const el = document.getElementById(f); if (el && entry.data[f] !== undefined) el.value = entry.data[f]; });
+    window.renderPreview();
 }
 
-function downloadPNG() {
-    const el = getDocElement();
-    el.style.position = 'absolute'; el.style.left = '-9999px';
-    document.body.appendChild(el);
-    html2canvas(el, { scale: 2, useCORS: true, scrollY: 0 }).then(canvas => {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = `doc_${today}.png`;
-        a.click();
-        document.body.removeChild(el);
-        showStatus('✓ PNG сохранен', 'success');
-    }).catch(() => {
-        if(el.parentNode) document.body.removeChild(el);
-        showStatus('❌ Ошибка экспорта', 'error');
+/* ==================== СТРОЕВАЯ / НАРЯД / ВООРУЖЕНИЕ ==================== */
+window.generateMorningReport = function() {
+    const total = document.getElementById('mrTotal').value;
+    const present = document.getElementById('mrPresent').value;
+    const duty = document.getElementById('mrDuty').value;
+    const leave = document.getElementById('mrLeave').value;
+    const sick = document.getElementById('mrSick').value;
+    const other = document.getElementById('mrOther').value;
+    
+    alert(`СТРОЕВАЯ ЗАПИСКА
+Всего по списку: ${total}
+В наличии: ${present}
+
+Отсутствуют:
+- В наряде: ${duty}
+- В отпуске: ${leave}
+- На лечении: ${sick}
+- Иные причины: ${other}`);
+}
+window.generateDutyOrder = function() { alert(`Приказ на наряд:\nДежурный: ${document.getElementById('dutyOfficer').value}`); }
+
+window.addWeapon = function() {
+    const name = document.getElementById('weaponName').value;
+    const serial = document.getElementById('weaponSerial').value;
+    if (!name || !serial) return;
+    const w = JSON.parse(localStorage.getItem('msvs_weapons') || '[]');
+    w.push({ name, serial }); localStorage.setItem('msvs_weapons', JSON.stringify(w));
+    document.getElementById('weaponName').value = ''; document.getElementById('weaponSerial').value = '';
+    window.renderWeapons();
+}
+window.renderWeapons = function() {
+    const list = document.getElementById('weaponList');
+    const w = JSON.parse(localStorage.getItem('msvs_weapons') || '[]');
+    list.innerHTML = w.map((x,i) => `<div style="padding:4px; border-bottom:1px solid #eee;">${esc(x.name)} (${esc(x.serial)}) <button onclick="window.deleteWeapon(${i})" style="float:right; font-size:10px;">X</button></div>`).join('');
+}
+window.deleteWeapon = function(i) {
+    const w = JSON.parse(localStorage.getItem('msvs_weapons') || '[]');
+    w.splice(i,1); localStorage.setItem('msvs_weapons', JSON.stringify(w)); window.renderWeapons();
+}
+
+/* ==================== ИГРЫ ==================== */
+let tetrisCanvas, tetrisCtx, tetrisGrid, tetrisPieces, tetrisCurrent, tetrisX, tetrisY, tetrisScore, tetrisInterval;
+function initTetris() {
+    tetrisCanvas = document.getElementById('tetrisCanvas'); tetrisCtx = tetrisCanvas.getContext('2d');
+    tetrisGrid = Array.from({length:20}, () => Array(10).fill(0));
+    tetrisPieces = [[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]]];
+    tetrisScore = 0;
+}
+window.startTetris = function() { if (tetrisInterval) clearInterval(tetrisInterval); initTetris(); spawnTetrisPiece(); tetrisInterval = setInterval(tetrisLoop, 500); }
+function spawnTetrisPiece() {
+    const idx = Math.floor(Math.random()*tetrisPieces.length);
+    tetrisCurrent = tetrisPieces[idx];
+    tetrisX = Math.floor((10 - tetrisCurrent[0].length)/2); tetrisY = 0;
+    if (collisionTetris(tetrisX, tetrisY, tetrisCurrent)) { clearInterval(tetrisInterval); alert('Конец! Счёт: '+tetrisScore); }
+}
+function collisionTetris(x,y,p) {
+    for (let r=0;r<p.length;r++) for (let c=0;c<p[r].length;c++) if (p[r][c]) {
+        const ny=y+r, nx=x+c;
+        if (ny>=20||nx<0||nx>=10||tetrisGrid[ny][nx]) return true;
+    }
+    return false;
+}
+function mergeTetris() {
+    for (let r=0;r<tetrisCurrent.length;r++) for (let c=0;c<tetrisCurrent[r].length;c++) if (tetrisCurrent[r][c]) tetrisGrid[tetrisY+r][tetrisX+c]=1;
+    let lines=0;
+    for (let r=19;r>=0;r--) if (tetrisGrid[r].every(v=>v)) { tetrisGrid.splice(r,1); tetrisGrid.unshift(Array(10).fill(0)); lines++; r++; }
+    tetrisScore += lines*100; document.getElementById('tetrisScore').textContent = tetrisScore;
+    spawnTetrisPiece();
+}
+function rotateTetris() {
+    const p = tetrisCurrent; const rot = p[0].map((_,c)=>p.map(row=>row[c]).reverse());
+    if (!collisionTetris(tetrisX, tetrisY, rot)) tetrisCurrent = rot;
+}
+function tetrisLoop() { if (!collisionTetris(tetrisX, tetrisY+1, tetrisCurrent)) tetrisY++; else mergeTetris(); drawTetris(); }
+function drawTetris() {
+    tetrisCtx.fillStyle='#000'; tetrisCtx.fillRect(0,0,tetrisCanvas.width,tetrisCanvas.height);
+    for (let r=0;r<20;r++) for (let c=0;c<10;c++) if (tetrisGrid[r][c]) { tetrisCtx.fillStyle='#888'; tetrisCtx.fillRect(c*24,r*24,23,23); }
+    tetrisCtx.fillStyle='#f00';
+    for (let r=0;r<tetrisCurrent.length;r++) for (let c=0;c<tetrisCurrent[r].length;c++) if (tetrisCurrent[r][c]) tetrisCtx.fillRect((tetrisX+c)*24,(tetrisY+r)*24,23,23);
+}
+document.addEventListener('keydown', (e) => {
+    const win = document.getElementById('app-tetris');
+    if (win && win.style.display === 'flex' && !win.classList.contains('minimized') && tetrisCurrent) {
+        if (e.key==='ArrowLeft' && !collisionTetris(tetrisX-1,tetrisY,tetrisCurrent)) { tetrisX--; drawTetris(); }
+        if (e.key==='ArrowRight' && !collisionTetris(tetrisX+1,tetrisY,tetrisCurrent)) { tetrisX++; drawTetris(); }
+        if (e.key==='ArrowDown' && !collisionTetris(tetrisX,tetrisY+1,tetrisCurrent)) { tetrisY++; drawTetris(); }
+        if (e.key==='ArrowUp') { rotateTetris(); drawTetris(); }
+    }
+});
+
+let snakeCanvas, snakeCtx, snake, snakeDir, snakeFood, snakeScore, snakeInterval;
+function initSnakeGame() {
+    snakeCanvas = document.getElementById('snakeCanvas'); snakeCtx = snakeCanvas.getContext('2d');
+    snake = [{x:10,y:10}]; snakeDir='RIGHT'; snakeFood={x:15,y:15}; snakeScore=0;
+}
+window.startSnake = function() { if (snakeInterval) clearInterval(snakeInterval); initSnakeGame(); snakeInterval=setInterval(snakeLoop,150); }
+function snakeLoop() {
+    const head = {...snake[0]};
+    if (snakeDir==='RIGHT') head.x++;
+    if (snakeDir==='LEFT') head.x--;
+    if (snakeDir==='UP') head.y--;
+    if (snakeDir==='DOWN') head.y++;
+    if (head.x<0||head.x>=20||head.y<0||head.y>=20||snake.some(s=>s.x===head.x&&s.y===head.y)) { clearInterval(snakeInterval); alert('Конец! Счёт: '+snakeScore); return; }
+    snake.unshift(head);
+    if (head.x===snakeFood.x && head.y===snakeFood.y) { snakeScore+=10; document.getElementById('snakeScore').textContent=snakeScore; snakeFood={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*20)}; }
+    else snake.pop();
+    drawSnake();
+}
+function drawSnake() {
+    snakeCtx.fillStyle='#111'; snakeCtx.fillRect(0,0,400,400);
+    snakeCtx.fillStyle='#0f0'; snake.forEach(s=>snakeCtx.fillRect(s.x*20,s.y*20,19,19));
+    snakeCtx.fillStyle='#f00'; snakeCtx.fillRect(snakeFood.x*20,snakeFood.y*20,19,19);
+}
+document.addEventListener('keydown', (e) => {
+    const win = document.getElementById('app-snake');
+    if (win && win.style.display === 'flex' && !win.classList.contains('minimized')) {
+        if (e.key==='ArrowUp'&&snakeDir!=='DOWN') snakeDir='UP';
+        if (e.key==='ArrowDown'&&snakeDir!=='UP') snakeDir='DOWN';
+        if (e.key==='ArrowLeft'&&snakeDir!=='RIGHT') snakeDir='LEFT';
+        if (e.key==='ArrowRight'&&snakeDir!=='LEFT') snakeDir='RIGHT';
+    }
+});
+
+/* ==== САПЁР ==== */
+let minesweeperBoard=[], minesweeperOver=false;
+window.initMinesweeper = function() {
+    const grid = document.getElementById('minesweeperGrid'); grid.innerHTML='';
+    minesweeperBoard=[]; minesweeperOver=false;
+    document.getElementById('minesweeperMsg').textContent='';
+    for (let i=0;i<64;i++) {
+        minesweeperBoard.push({mine:false, revealed:false, flag:false, neighbors:0});
+        const c=document.createElement('div');
+        c.className='minesweeper-cell'; c.dataset.index=i;
+        c.onclick=()=>clickCell(i);
+        c.oncontextmenu=(ev)=>{ ev.preventDefault(); toggleFlag(i); };
+        grid.appendChild(c);
+    }
+    let placed=0;
+    while (placed<10) { const idx=Math.floor(Math.random()*64); if (!minesweeperBoard[idx].mine) { minesweeperBoard[idx].mine=true; placed++; } }
+    for (let i=0;i<64;i++) {
+        if (minesweeperBoard[i].mine) continue;
+        let n=0; const r0=Math.floor(i/8), c0=i%8;
+        for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
+            const r=r0+dr, c=c0+dc;
+            if (r>=0&&r<8&&c>=0&&c<8&&minesweeperBoard[r*8+c].mine) n++;
+        }
+        minesweeperBoard[i].neighbors=n;
+    }
+}
+function cellEl(i) { return document.querySelector(`.minesweeper-cell[data-index="${i}"]`); }
+function toggleFlag(i) {
+    if (minesweeperOver || minesweeperBoard[i].revealed) return;
+    minesweeperBoard[i].flag = !minesweeperBoard[i].flag;
+    cellEl(i).classList.toggle('flag', minesweeperBoard[i].flag);
+}
+function clickCell(idx) {
+    if (minesweeperOver) return;
+    const cell = minesweeperBoard[idx];
+    if (cell.flag || cell.revealed) return;
+    cell.revealed = true;
+    const el = cellEl(idx);
+    el.classList.add('revealed');
+    if (cell.mine) {
+        minesweeperOver = true;
+        el.style.background='#f00'; el.textContent='💣';
+        document.getElementById('minesweeperMsg').textContent = '💥 Подрыв! Нажмите «Сапер» в меню для новой игры.';
+        return;
+    }
+    if (cell.neighbors > 0) { el.textContent = cell.neighbors; el.style.color = ['','#00f','#080','#a00','#a0a','#a50','#0aa','#000','#555'][cell.neighbors]; }
+    else {
+        const r0=Math.floor(idx/8), c0=idx%8;
+        for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
+            const r=r0+dr, c=c0+dc;
+            if (r>=0&&r<8&&c>=0&&c<8) { const j=r*8+c; if (!minesweeperBoard[j].revealed && !minesweeperBoard[j].flag) clickCell(j); }
+        }
+    }
+    if (minesweeperBoard.every((c,i) => c.revealed || c.mine)) {
+        minesweeperOver = true;
+        document.getElementById('minesweeperMsg').textContent = '🏆 Победа!';
+    }
+}
+
+/* ==== ШАХМАТЫ ==== */
+let chessBoardState = [], chessSelected = null, chessTurn = 'w';
+const PIECES = {
+    '♜':'r','♞':'n','♝':'b','♛':'q','♚':'k','♟':'p',
+    '♖':'R','♘':'N','♗':'B','♕':'Q','♔':'K','♙':'P'
+};
+window.initChess = function() {
+    const board = document.getElementById('chessBoard'); board.innerHTML='';
+    const initial = ['♜','♞','♝','♛','♚','♝','♞','♜','♟','♟','♟','♟','♟','♟','♟','♟','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','♙','♙','♙','♙','♙','♙','♙','♙','♖','♘','♗','♕','♔','♗','♘','♖'];
+    chessBoardState = initial.slice();
+    chessSelected = null; chessTurn = 'w';
+    document.getElementById('chessStatus').textContent = 'Ход белых';
+    for (let i=0;i<64;i++) {
+        const c=document.createElement('div');
+        c.className='chess-cell '+(((Math.floor(i/8)+i%8)%2===0)?'light':'dark');
+        c.textContent = chessBoardState[i];
+        c.dataset.idx = i;
+        c.onclick = () => onChessClick(i);
+        board.appendChild(c);
+    }
+}
+function isWhite(p) { return p && '♖♘♗♕♔♙'.includes(p); }
+function isBlack(p) { return p && '♜♞♝♛♚♟'.includes(p); }
+function onChessClick(idx) {
+    const p = chessBoardState[idx];
+    if (chessSelected !== null) {
+        if (idx === chessSelected) { chessSelected = null; redrawChess(); return; }
+        if (canMove(chessSelected, idx)) {
+            chessBoardState[idx] = chessBoardState[chessSelected];
+            chessBoardState[chessSelected] = '';
+            chessSelected = null;
+            chessTurn = chessTurn === 'w' ? 'b' : 'w';
+            document.getElementById('chessStatus').textContent = chessTurn === 'w' ? 'Ход белых' : 'Ход чёрных';
+            redrawChess();
+            return;
+        }
+        if (p && ((chessTurn==='w' && isWhite(p)) || (chessTurn==='b' && isBlack(p)))) { chessSelected = idx; redrawChess(); }
+        else { chessSelected = null; redrawChess(); }
+        return;
+    }
+    if (p && ((chessTurn==='w' && isWhite(p)) || (chessTurn==='b' && isBlack(p)))) { chessSelected = idx; redrawChess(); }
+}
+function redrawChess() {
+    document.querySelectorAll('#chessBoard .chess-cell').forEach((c,i) => {
+        c.textContent = chessBoardState[i];
+        c.classList.toggle('sel', i === chessSelected);
     });
 }
-
-// Реальный экспорт в DOCX
-function downloadDOCX() {
-    if (!window.docx) { showStatus('❌ Библиотека DOCX не загружена', 'error'); return; }
-    const d = collectData();
-    const { Document, Packer, Paragraph, TextRun, AlignmentType } = window.docx;
-
-    let titleText = 'РАПОРТ';
-    const paragraphs = [];
-    
-    if (d.addressPosition || d.addressName) {
-        paragraphs.push(new Paragraph({ children: [new TextRun({ text: `${d.addressPosition} ${d.addressName}`, size: 26 })], alignment: AlignmentType.RIGHT }));
+function canMove(from, to) {
+    const p = chessBoardState[from]; if (!p) return false;
+    const t = chessBoardState[to];
+    if (t && ((isWhite(p) && isWhite(t)) || (isBlack(p) && isBlack(t)))) return false;
+    const fr = Math.floor(from/8), fc = from%8, tr = Math.floor(to/8), tc = to%8;
+    const dr = tr-fr, dc = tc-fc;
+    const adr = Math.abs(dr), adc = Math.abs(dc);
+    const type = PIECES[p];
+    const white = isWhite(p);
+    if (type === 'p' || type === 'P') {
+        const dir = white ? -1 : 1;
+        const startRow = white ? 6 : 1;
+        if (dc === 0 && t === '') {
+            if (dr === dir) return true;
+            if (fr === startRow && dr === 2*dir && chessBoardState[(fr+dir)*8+fc] === '') return true;
+        }
+        if (adc === 1 && dr === dir && t && ((white && isBlack(t)) || (!white && isWhite(t)))) return true;
+        return false;
     }
-    paragraphs.push(new Paragraph({ children: [new TextRun({ text: titleText, bold: true, size: 32 })], alignment: AlignmentType.CENTER, spacing: { before: 400, after: 200 } }));
-    
-    if (d.subject) {
-        paragraphs.push(new Paragraph({ children: [new TextRun({ text: d.subject, size: 26 })], alignment: AlignmentType.CENTER, spacing: { after: 300 } }));
+    if (type === 'n' || type === 'N') return (adr===2&&adc===1)||(adr===1&&adc===2);
+    if (type === 'b' || type === 'B') return adr===adc && adr>0 && pathClear(fr,fc,tr,tc);
+    if (type === 'r' || type === 'R') return (dr===0||dc===0) && (adr+adc>0) && pathClear(fr,fc,tr,tc);
+    if (type === 'q' || type === 'Q') return (adr===adc||dr===0||dc===0) && (adr+adc>0) && pathClear(fr,fc,tr,tc);
+    if (type === 'k' || type === 'K') return Math.max(adr,adc) === 1;
+    return false;
+}
+function pathClear(fr,fc,tr,tc) {
+    const dr = Math.sign(tr-fr), dc = Math.sign(tc-fc);
+    let r=fr+dr, c=fc+dc;
+    while (r!==tr || c!==tc) {
+        if (chessBoardState[r*8+c]) return false;
+        r+=dr; c+=dc;
     }
-    
-    let intro = `Я, ${d.rank || '____'} ${d.fio || '________________'}, ${d.unit || '________________'}, ${d.position || '________________'}, докладываю:`;
-    paragraphs.push(new Paragraph({ children: [new TextRun({ text: intro, size: 26 })], alignment: AlignmentType.JUSTIFIED, spacing: { after: 200 } }));
-    
-    d.content.split('\n').forEach(line => { 
-        paragraphs.push(new Paragraph({ children: [new TextRun({ text: line, size: 26 })], alignment: AlignmentType.JUSTIFIED, spacing: { after: 120 } })); 
+    return true;
+}
+
+/* ==== ПЕЙДЖЕР ==== */
+function getPagerMessages() { try { return JSON.parse(localStorage.getItem('msvs_pager')||'[]'); } catch(e) { return []; } }
+function savePagerMessages(m) { localStorage.setItem('msvs_pager', JSON.stringify(m.slice(-200))); }
+window.renderPager = function() {
+    const ch = document.getElementById('pagerChannel').value;
+    const all = getPagerMessages();
+    const box = document.getElementById('pagerMessages');
+    const filtered = all.filter(m => {
+        if (ch === 'general') return m.channel === 'general';
+        if (ch === 'command') return m.channel === 'command';
+        return m.channel === 'private' && (m.to === currentLogin || m.from === currentLogin);
     });
-    
-    paragraphs.push(new Paragraph({ children: [new TextRun({ text: `${formatDate(d.date)}    ${d.location}`, size: 24 })], alignment: AlignmentType.LEFT, spacing: { before: 600 } }));
-    paragraphs.push(new Paragraph({ children: [new TextRun({ text: `________________    ${getShortName(d.fio)}`, size: 24 })], alignment: AlignmentType.RIGHT, spacing: { before: 400 } }));
-
-    const doc = new Document({ sections: [{ properties: { page: { margin: { top: 1134, right: 850, bottom: 1134, left: 1701 } } }, children: paragraphs }] });
-    Packer.toBlob(doc).then(blob => {
-        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `doc_${today}.docx`; link.click(); URL.revokeObjectURL(link.href);
-        showStatus('✓ DOCX сохранен', 'success');
-    }).catch(err => showStatus('❌ Ошибка DOCX: ' + err.message, 'error'));
+    box.innerHTML = filtered.map(m => `[${esc(m.time)}] ${esc(m.from)} → ${esc(m.channel)}${m.to?' → '+esc(m.to):''}: ${esc(m.text)}`).join('<br>') || '<i style="color:#080;">— пусто —</i>';
+    box.scrollTop = box.scrollHeight;
 }
-
-function copyToClipboard() {
-    const txt = document.getElementById('rapport').innerText;
-    navigator.clipboard.writeText(txt).then(() => showStatus('✓ Текст скопирован', 'success'));
+window.sendPagerMessage = function() {
+    const input = document.getElementById('pagerInput'); const msg = input.value.trim(); if (!msg) return;
+    const ch = document.getElementById('pagerChannel').value;
+    if (ch === 'command' && currentRole === 'soldier') { toast('Командный канал только для офицеров/командиров', 'err'); return; }
+    let to = null;
+    if (ch === 'private') {
+        to = prompt('Кому (логин)?', '');
+        if (!to) return;
+    }
+    const msgs = getPagerMessages();
+    msgs.push({ time: new Date().toLocaleTimeString('ru-RU'), from: currentLogin, to, text: msg, channel: ch });
+    savePagerMessages(msgs);
+    input.value='';
+    window.renderPager();
 }
+window.handlePagerKey = function(e) { if (e.key==='Enter') window.sendPagerMessage(); }
 
-/* ============ ИНИЦИАЛИЗАЦИЯ ============ */
-function saveDraft() {
-    localStorage.setItem('rapport_draft', JSON.stringify(collectData()));
+/* ==================== СТАРТ ==================== */
+const bootLogs = ["Linux version 2.4.20-32...","Initializing CPU#0","Detected 2000.000 MHz processor.","System ready. Running login program..."];
+let bootIndex = 0; const bootLogEl = document.getElementById('boot-log');
+function runBoot() {
+    if (bootIndex < bootLogs.length) {
+        const span = document.createElement('div');
+        span.innerHTML = `${bootLogs[bootIndex]} <span class="boot-ok">[ OK ]</span>`;
+        bootLogEl.appendChild(span); bootLogEl.scrollTop = bootLogEl.scrollHeight;
+        bootIndex++; setTimeout(runBoot, 200);
+    } else {
+        setTimeout(() => { document.getElementById('boot-screen').style.display='none'; document.getElementById('login-screen').style.display='flex'; }, 500);
+    }
 }
+runBoot();
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('date').value = today;
-    const raw = localStorage.getItem('rapport_draft');
-    if (raw) {
-        try {
-            const data = JSON.parse(raw);
-            FIELD_IDS.forEach(id => { if (data[id]) document.getElementById(id).value = data[id]; });
-        } catch(e) {}
-    }
-    
-    if (signatureData) {
-        document.getElementById('sigPreview').src = signatureData;
-        document.getElementById('sigPreview').classList.add('show');
-    }
-    if (stampData) {
-        document.getElementById('stampPreview').src = stampData;
-        document.getElementById('stampPreview').classList.add('show');
-        document.getElementById('stampSize').value = stampSize;
-        document.getElementById('stampOpacity').value = stampOpacity;
-    }
-
-    FIELD_IDS.forEach(id => {
-        document.getElementById(id)?.addEventListener('input', () => {
-            renderPreview();
-            saveDraft();
-        });
-    });
-
-    renderPreview();
+    document.getElementById('ord_date').value = today;
+    FIELD_IDS.forEach(id => document.getElementById(id)?.addEventListener('input', window.renderPreview));
+    window.renderPreview();
 });
-
-function toggleTheme() {
-    document.body.classList.toggle('light-theme');
-}
-
-// Горячие клавиши
 document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key === 's') { e.preventDefault(); downloadPDF(); }
-    if (e.ctrlKey && e.key === 'p') { e.preventDefault(); window.print(); }
+    if (document.getElementById('login-screen').style.display === 'flex' && e.key === 'Enter') window.loginOS();
+    if (document.getElementById('register-screen').style.display === 'flex' && e.key === 'Enter') window.registerAccount();
 });
 </script>
 </body>
